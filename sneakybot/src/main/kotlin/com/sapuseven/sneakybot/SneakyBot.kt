@@ -56,19 +56,13 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
     }
 
     fun run() {
-        val config = TS3Config()
-        config.setHost(botConfig.host)
-        config.setQueryPort(botConfig.port)
-        config.setFloodRate(if (botConfig.unlimitedFloodRate) TS3Query.FloodRate.UNLIMITED else TS3Query.FloodRate.DEFAULT)
-        config.setEnableCommunicationsLogging(botConfig.debug)
-
         log.info("Initializing plugins (Phase 1)...")
 
         loadPlugins()
         preInit()
 
         try {
-            query = connect(config)
+            query = connect(generateConfig())
         } catch (e: TS3ConnectionFailedException) {
             log.error("Connection failed: ${e.message}")
             exitProcess(1)
@@ -122,63 +116,14 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
             sendChannelMessage("SneakyBOT is now online.")
         else if (mode == MODE_DIRECT)
             sendDirectMessage("SneakyBOT is now online. Please use the direct chat for commands.")
+
+        setupListeners()
+    }
+
+    private fun setupListeners() {
         query.api.addTS3Listeners(object : TS3Listener {
             override fun onTextMessage(e: TextMessageEvent) {
-                if (isCommand(e.message) && e.invokerId != whoAmI.id) {
-                    if (e.targetMode != TextMessageTargetMode.SERVER) {
-                        if (mode == MODE_DIRECT) {
-                            if (e.targetMode == TextMessageTargetMode.CLIENT) {
-                                if (directClients.contains(e.invokerId)) {
-                                    log.info("User ${e.invokerName} executed a command via DIRECT chat: ${e.message}")
-                                    interpretCommand(e.message, e.invokerId)
-                                } else {
-                                    log.info("User ${e.invokerName} tried to execute a command, but has no permissions to use DIRECT chat: " + e.message)
-                                    query.api.sendPrivateMessage(
-                                        e.invokerId,
-                                        "You are not allowed to give me commands!"
-                                    )
-                                }
-                            } else {
-                                log.info("User ${e.invokerName} tried to execute a command, but used CONSOLE chat instead of DIRECT chat: " + e.message)
-                                sendChannelMessage("Please use the direct chat to communicate with me.")
-                            }
-                        } else if (mode == MODE_CHANNEL) {
-                            if (e.targetMode == TextMessageTargetMode.CHANNEL) {
-                                log.info("User ${e.invokerName} executed a command via CONSOLE chat: " + e.message)
-                                interpretCommand(e.message, e.invokerId)
-                            } else if (e.targetMode == TextMessageTargetMode.CLIENT) {
-                                if (e.message == "!mode direct ${botConfig.consolePassword}") {
-                                    setupMode(MODE_DIRECT)
-                                    directClients.add(e.invokerId)
-                                    query.api.addClientToServerGroup(
-                                        serverGroupId,
-                                        query.api.getClientInfo(e.invokerId).databaseId
-                                    )
-                                    log.info("User ${e.invokerName} regained access to the DIRECT chat.")
-                                    query.api.sendPrivateMessage(
-                                        e.invokerId,
-                                        "You are now allowed to give me commands."
-                                    )
-                                }
-                            } else {
-                                log.info("User ${e.invokerName} tried to execute a command, but didn't use CONSOLE chat: " + e.message)
-                                query.api.sendPrivateMessage(
-                                    e.invokerId,
-                                    "Please use the SneakyBOT Console channel to communicate with me."
-                                )
-                            }
-                        }
-                    } else {
-                        /*if (e.message != "!call") {
-                            if (mode != MODE_DIRECT)
-                                setupMode(MODE_DIRECT)
-                            else
-                                manager.sendMessage("Mode is already set to DIRECT!", e.invokerId)
-                        }*/
-                        log.info("User " + e.invokerName + " tried to execute a command via SERVER chat: " + e.message)
-                        query.api.sendServerMessage("Sorry, I can only accept commands from the SneakyBot Console Channel!")
-                    }
-                }
+                interpretTextMessage(e)
 
                 for (p in services)
                     p.onEventReceived(e)
@@ -190,15 +135,7 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
             }
 
             override fun onClientMoved(e: ClientMovedEvent) {
-                if (e.targetChannelId == consoleChannelId) {
-                    val name = query.api.getClientInfo(e.clientId).nickname
-                    log.info("User $name entered the SneakyBOT Console channel.")
-                    if (mode == MODE_CHANNEL)
-                        manager.sendMessage(
-                            "\nWelcome, " + name + ", to the SneakyBOT Console!\n" +
-                                    "If you are new, '!help' is usually a good command for getting started.", e.clientId
-                        )
-                }
+                interpretClientMoved(e)
 
                 for (p in services)
                     p.onEventReceived(e)
@@ -251,6 +188,85 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
                     p.onEventReceived(e)
             }
         })
+    }
+
+    private fun interpretClientMoved(event: ClientMovedEvent) {
+        if (event.targetChannelId == consoleChannelId) {
+            val name = query.api.getClientInfo(event.clientId).nickname
+            log.info("User $name entered the SneakyBOT Console channel.")
+            if (mode == MODE_CHANNEL)
+                manager.sendMessage(
+                    "\nWelcome, " + name + ", to the SneakyBOT Console!\n" +
+                            "If you are new, '!help' is usually a good command for getting started.", event.clientId
+                )
+        }
+    }
+
+    private fun interpretTextMessage(event: TextMessageEvent) {
+        if (isCommand(event.message) && event.invokerId != whoAmI.id) {
+            if (event.targetMode != TextMessageTargetMode.SERVER) {
+                if (mode == MODE_DIRECT) {
+                    if (event.targetMode == TextMessageTargetMode.CLIENT) {
+                        if (directClients.contains(event.invokerId)) {
+                            log.info("User ${event.invokerName} executed a command via DIRECT chat: ${event.message}")
+                            interpretCommand(event.message, event.invokerId)
+                        } else {
+                            log.info("User ${event.invokerName} tried to execute a command, but has no permissions to use DIRECT chat: " + event.message)
+                            query.api.sendPrivateMessage(
+                                event.invokerId,
+                                "You are not allowed to give me commands!"
+                            )
+                        }
+                    } else {
+                        log.info("User ${event.invokerName} tried to execute a command, but used CONSOLE chat instead of DIRECT chat: " + event.message)
+                        sendChannelMessage("Please use the direct chat to communicate with me.")
+                    }
+                } else if (mode == MODE_CHANNEL) {
+                    if (event.targetMode == TextMessageTargetMode.CHANNEL) {
+                        log.info("User ${event.invokerName} executed a command via CONSOLE chat: " + event.message)
+                        interpretCommand(event.message, event.invokerId)
+                    } else if (event.targetMode == TextMessageTargetMode.CLIENT) {
+                        if (event.message == "!mode direct ${botConfig.consolePassword}") {
+                            setupMode(MODE_DIRECT)
+                            directClients.add(event.invokerId)
+                            query.api.addClientToServerGroup(
+                                serverGroupId,
+                                query.api.getClientInfo(event.invokerId).databaseId
+                            )
+                            log.info("User ${event.invokerName} regained access to the DIRECT chat.")
+                            query.api.sendPrivateMessage(
+                                event.invokerId,
+                                "You are now allowed to give me commands."
+                            )
+                        }
+                    } else {
+                        log.info("User ${event.invokerName} tried to execute a command, but didn't use CONSOLE chat: " + event.message)
+                        query.api.sendPrivateMessage(
+                            event.invokerId,
+                            "Please use the SneakyBOT Console channel to communicate with me."
+                        )
+                    }
+                }
+            } else {
+                /*if (event.message != "!call") {
+                    if (mode != MODE_DIRECT)
+                        setupMode(MODE_DIRECT)
+                    else
+                        manager.sendMessage("Mode is already set to DIRECT!", event.invokerId)
+                }*/
+                log.info("User " + event.invokerName + " tried to execute a command via SERVER chat: " + event.message)
+                query.api.sendServerMessage("Sorry, I can only accept commands from the SneakyBot Console Channel!")
+            }
+        }
+    }
+
+    private fun generateConfig(): TS3Config {
+        val config = TS3Config()
+        config.setHost(botConfig.host)
+        config.setQueryPort(botConfig.port)
+        config.setFloodRate(if (botConfig.unlimitedFloodRate) TS3Query.FloodRate.UNLIMITED else TS3Query.FloodRate.DEFAULT)
+        config.setEnableCommunicationsLogging(botConfig.debug)
+        return config
     }
 
     private fun logCommandFailed(e: TS3CommandFailedException, msg: String = "") {
