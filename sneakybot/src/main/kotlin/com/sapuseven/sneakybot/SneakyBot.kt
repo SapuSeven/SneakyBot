@@ -15,8 +15,9 @@ import com.sapuseven.sneakybot.plugins.PluggableCommand
 import com.sapuseven.sneakybot.plugins.PluggableService
 import com.sapuseven.sneakybot.plugins.PluginLoader
 import com.sapuseven.sneakybot.plugins.Timer
-import com.sapuseven.sneakybot.utils.SneakyBotConfig
+import com.sapuseven.sneakybot.utils.Command
 import com.sapuseven.sneakybot.utils.ConsoleCommand
+import com.sapuseven.sneakybot.utils.SneakyBotConfig
 import com.xenomachina.argparser.ArgParser
 import com.xenomachina.argparser.mainBody
 import org.slf4j.LoggerFactory
@@ -28,7 +29,10 @@ import kotlin.system.exitProcess
 
 fun main(args: Array<String>) = mainBody {
     val botConfig = ArgParser(args).parseInto(::SneakyBotConfig)
-    System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, if (botConfig.debug) "DEBUG" else "INFO") // TODO: Allow the user to specify any log level
+    System.setProperty(
+        org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY,
+        if (botConfig.debug) "DEBUG" else "INFO"
+    ) // TODO: Allow the user to specify any log level
     SneakyBot(botConfig).run()
 }
 
@@ -406,16 +410,9 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
                                 .append(" : ")
 
                             for (param in pluggableCommand.command.parameters) {
-                                if (param.isRequired)
-                                    builder
-                                        .append("[")
-                                        .append(param.parameter.toUpperCase())
-                                        .append("] ")
-                                else
-                                    builder
-                                        .append("<")
-                                        .append(param.parameter.toUpperCase())
-                                        .append("> ")
+                                builder
+                                    .append(formatParam(param))
+                                    .append(" ")
                             }
 
                             builder
@@ -441,6 +438,13 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
                 }
             }
         }
+    }
+
+    private fun formatParam(param: Command.Parameter): String {
+        return if (param.isRequired)
+            "[${param.parameter?.toUpperCase()}]"
+        else
+            "<${param.parameter?.toUpperCase()}>"
     }
 
     private fun preInit() {
@@ -512,16 +516,9 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
                 .append(command.command.commandName)
                 .append(" ")
             for (param in command.command.parameters) {
-                if (param.isRequired)
-                    builder
-                        .append("[")
-                        .append(param.parameter.toUpperCase())
-                        .append("] ")
-                else
-                    builder
-                        .append("<")
-                        .append(param.parameter.toUpperCase())
-                        .append("> ")
+                builder
+                    .append(formatParam(param))
+                    .append(" ")
             }
             builder.append(": ")
 
@@ -615,7 +612,11 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
             if (!isAdmin)
                 query.api.usePrivilegeKey(query.api.addPrivilegeKeyServerGroup(templateServerGroupId, null))*/
             serverGroupId =
-                query.api.copyServerGroup(botConfig.templateServerGroupId, "SneakyBOT", PermissionGroupDatabaseType.REGULAR)
+                query.api.copyServerGroup(
+                    botConfig.templateServerGroupId,
+                    "SneakyBOT",
+                    PermissionGroupDatabaseType.REGULAR
+                )
             query.api.deleteServerGroupPermission(serverGroupId, "i_icon_id") // Remove icon
             query.api.deleteServerGroupPermission(
                 serverGroupId,
