@@ -15,7 +15,6 @@ import com.sapuseven.sneakybot.plugins.PluggableCommand
 import com.sapuseven.sneakybot.plugins.PluggableService
 import com.sapuseven.sneakybot.plugins.PluginLoader
 import com.sapuseven.sneakybot.plugins.Timer
-import com.sapuseven.sneakybot.utils.BuiltinCommands
 import com.sapuseven.sneakybot.utils.Command
 import com.sapuseven.sneakybot.utils.ConsoleCommand
 import com.sapuseven.sneakybot.utils.SneakyBotConfig
@@ -40,16 +39,16 @@ fun main(args: Array<String>) = mainBody {
 class SneakyBot(internal val botConfig: SneakyBotConfig) {
     internal lateinit var query: TS3Query
     internal var mode: Int = MODE_CHANNEL
-    internal lateinit var manager: PluginManagerImpl
-    internal lateinit var whoAmI: ServerQueryInfo
-    internal var consoleChannelId: Int = -1
-    internal var serverGroupId: Int = -1
-    internal val directClients = ArrayList<Int>()
-    internal val timers = ArrayList<Thread>()
-    internal val commands = ArrayList<PluggableCommand>()
-    internal val services = ArrayList<PluggableService>()
+    private lateinit var whoAmI: ServerQueryInfo
+    private var consoleChannelId: Int = -1
+    private var serverGroupId: Int = -1
+    private val directClients = ArrayList<Int>()
+    private val timers = ArrayList<Thread>()
+    private val commands = ArrayList<PluggableCommand>()
+    private val services = ArrayList<PluggableService>()
+    private lateinit var manager: PluginManagerImpl
 
-    internal val log = LoggerFactory.getLogger(SneakyBot::class.java)
+    private val log = LoggerFactory.getLogger(SneakyBot::class.java)
 
     companion object {
         const val MODE_DIRECT = 0x0001
@@ -300,10 +299,151 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
 
         when (cmd.commandName) {
             "stop", "kill" -> quit()
-            "mode" -> BuiltinCommands.mode(this, cmd, invokerId)
-            "directs" -> BuiltinCommands.directs(this, cmd, invokerId)
-            "reload" -> BuiltinCommands.reload(this)
-            "help" -> BuiltinCommands.help(this, cmd, invokerId)
+            "mode" -> if (cmd.paramCount() == 2) {
+                when (cmd.getParam(1)) {
+                    "direct", "d" -> if (mode != MODE_DIRECT)
+                        setupMode(MODE_DIRECT)
+                    else
+                        manager.sendMessage("Mode is already set to DIRECT!", invokerId)
+                    "channel", "console", "c" -> if (mode != MODE_CHANNEL)
+                        setupMode(MODE_CHANNEL)
+                    else
+                        manager.sendMessage("Mode is already set to CHANNEL!", invokerId)
+                    else -> manager.sendMessage("Unknown mode: " + cmd.getParam(1), invokerId)
+                }
+            } else {
+                manager.sendMessage("This isn't the right way of using this command!\nTry '!help mode'", invokerId)
+            }
+            "directs" -> when {
+                cmd.paramCount() == 3 -> when (cmd.getParam(1)) {
+                    "add" -> if (!directClients.contains(Integer.parseInt(cmd.getParam(2)))) {
+                        directClients.add(Integer.parseInt(cmd.getParam(2)))
+                        query.api.sendPrivateMessage(
+                            Integer.parseInt(cmd.getParam(2)),
+                            "You are now using the direct chat to communicate with me."
+                        )
+                        query.api.addClientToServerGroup(
+                            serverGroupId,
+                            query.api.getClientInfo(Integer.parseInt(cmd.getParam(2))).databaseId
+                        )
+                        val clientListMsg =
+                            StringBuilder("User added to direct client list.\n\nClients that can contact me:")
+                        for (client in directClients)
+                            clientListMsg.append("\n - ").append(query.api.getClientInfo(client).nickname)
+                        manager.sendMessage(clientListMsg.toString(), invokerId)
+                    } else {
+                        manager.sendMessage("This user is already in the direct clients list.", invokerId)
+                    }
+                    "del" -> if (directClients.contains(Integer.parseInt(cmd.getParam(2)))) {
+                        directClients.remove(Integer.parseInt(cmd.getParam(2)))
+                        query.api.sendPrivateMessage(
+                            Integer.parseInt(cmd.getParam(2)),
+                            "Direct chat is now closed. You can send me commands via the SneakyBOT Console channel."
+                        )
+                        query.api.removeClientFromServerGroup(
+                            serverGroupId,
+                            query.api.getClientInfo(Integer.parseInt(cmd.getParam(2))).databaseId
+                        )
+                        manager.sendMessage("User removed from direct client list.", invokerId)
+                    } else {
+                        manager.sendMessage("This user is not in the direct clients list!", invokerId)
+                    }
+                    else -> manager.sendMessage("Unknown option: " + cmd.getParam(1), invokerId)
+                }
+                cmd.paramCount() == 1 -> {
+                    val clientListMsg = StringBuilder("\nClients that can contact me:")
+                    for (client in directClients)
+                        clientListMsg.append("\n - ").append(query.api.getClientInfo(client).nickname)
+                    manager.sendMessage(clientListMsg.toString(), invokerId)
+                }
+                else -> manager.sendMessage(
+                    "This isn't the right way of using this command!\nTry '!help directs'",
+                    invokerId
+                )
+            }
+            "reload" -> {
+                log.info("Reloading plugins...")
+
+                stopPlugins()
+                loadPlugins()
+                try {
+                    preInit()
+                } catch (e: Exception) {
+                    // TODO: Better error handling
+                    e.printStackTrace()
+                    exitProcess(1)
+                }
+
+                postInit()
+
+                log.info("All plugins reloaded.")
+                val msg = "Plugins reloaded (${commands.size} commands and ${services.size} services active)."
+                if (mode == MODE_CHANNEL)
+                    sendChannelMessage(msg)
+                else if (mode == MODE_DIRECT)
+                    sendDirectMessage(msg)
+            }
+            "help" -> when {
+                cmd.paramCount() == 1 -> manager.sendMessage(
+                    "\n" +
+                            "Available Commands:\n" +
+                            "\n" +
+                            "| !kill ALIAS !stop : Stops the SneakyBOT.\n" +
+                            "| \n" +
+                            "| !mode [channel|direct <PASSWORD>] : Switches between direct and channel mode. Use the PASSWORD parameter to start direct mode using a private message without using the console channel.\n" +
+                            "| \n" +
+                            "| !directs <[add|del] [CLIENT_ID]> : Lists all clients that can use the direct chat, or add/remove clients to the direct client list.\n" +
+                            "| \n" +
+                            "| !reload : Reload all plugins.\n" +
+                            listHelp() +
+                            "\n" +
+                            "[***] ... REQUIRED\n" +
+                            "<***> ... OPTIONAL", invokerId
+                )
+                cmd.paramCount() == 2 -> when (cmd.getParam(1)) {
+                    "stop", "kill" -> manager.sendMessage("Usage:\n!kill ALIAS !stop : Stops the SneakyBOT.", invokerId)
+                    "mode" -> manager.sendMessage(
+                        "Usage:\n!mode [channel|direct <PASSWORD>] : Switches between direct and channel mode. Use the PASSWORD parameter to start direct mode using a private message without using the console channel.",
+                        invokerId
+                    )
+                    "directs" -> manager.sendMessage(
+                        "Usage:\n!directs <[add|del] [CLIENT_ID]> : Lists all clients that can use the direct chat, or add/remove clients to the direct client list.",
+                        invokerId
+                    )
+                    "reload" -> manager.sendMessage("Usage:\n!reload : Reload all plugins.", invokerId)
+                    "help" -> manager.sendMessage(
+                        "Usage:\n!help [COMMAND_NAME] : Display useful information about all the commands or a specific command.",
+                        invokerId
+                    )
+                    else -> {
+                        val pluggableCommand = getCommandByName(cmd.getParam(1))
+                        if (pluggableCommand == null) {
+                            manager.sendMessage("This commands help page doesn't exist in my database!", invokerId)
+                        } else {
+                            val builder = StringBuilder("Usage:\n!")
+                            builder
+                                .append(pluggableCommand.command.commandName)
+                                .append(" : ")
+
+                            for (param in pluggableCommand.command.parameters) {
+                                builder
+                                    .append(formatParam(param))
+                                    .append(" ")
+                            }
+
+                            builder
+                                .append(pluggableCommand.command.help)
+                                .append("\n")
+
+                            manager.sendMessage(builder.toString(), invokerId)
+                        }
+                    }
+                }
+                else -> manager.sendMessage(
+                    "This isn't the right way of using this command!\nUsage: '!help <COMMAND>'",
+                    invokerId
+                )
+            }
             else -> {
                 val pluggableCommand = getCommandByName(cmd.commandName)
                 if (pluggableCommand == null) {
@@ -316,14 +456,14 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
         }
     }
 
-    internal fun formatParam(param: Command.Parameter): String {
+    private fun formatParam(param: Command.Parameter): String {
         return if (param.isRequired)
             "[${param.parameter?.toUpperCase()}]"
         else
             "<${param.parameter?.toUpperCase()}>"
     }
 
-    internal fun preInit() {
+    private fun preInit() {
         for (p in services) {
             p.setPluginManager(manager)
             log.debug("PreInit: " + p.javaClass.simpleName)
@@ -331,7 +471,7 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
         }
     }
 
-    internal fun postInit() {
+    private fun postInit() {
         for (p in services) {
             log.debug("PostInit: " + p.javaClass.simpleName)
             p.postInit(manager)
@@ -343,7 +483,7 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
         }
     }
 
-    internal fun loadPlugins() {
+    private fun loadPlugins() {
         try {
             commands.clear()
             commands.addAll(PluginLoader.loadCommands(File(botConfig.pluginDir)))
@@ -362,7 +502,7 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
         }
     }
 
-    internal fun stopPlugins() {
+    private fun stopPlugins() {
         for (p in services) {
             log.debug("Stopping: " + p.javaClass.simpleName)
             p.stop(manager)
@@ -375,7 +515,7 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
         timers.clear()
     }
 
-    internal fun getCommandByName(name: String): PluggableCommand? {
+    private fun getCommandByName(name: String): PluggableCommand? {
         for (command in commands) {
             if (command.command.commandName == name)
                 return command
@@ -384,7 +524,7 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
         return null
     }
 
-    internal fun listHelp(): String {
+    private fun listHelp(): String {
         val builder = StringBuilder()
         for (command in commands) {
             builder
@@ -403,7 +543,7 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
         return builder.toString()
     }
 
-    internal fun setupMode(mode: Int) {
+    private fun setupMode(mode: Int) {
         if (mode == MODE_DIRECT) {
             log.info("Switching to direct mode...")
             directClients.clear()
@@ -589,11 +729,11 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
         return consoleChannel?.id ?: -1
     }
 
-    internal fun sendChannelMessage(msg: String) {
+    private fun sendChannelMessage(msg: String) {
         query.api.sendChannelMessage(msg)
     }
 
-    internal fun sendDirectMessage(msg: String) {
+    private fun sendDirectMessage(msg: String) {
         for (userId in directClients)
             query.api.sendPrivateMessage(userId, msg)
     }
