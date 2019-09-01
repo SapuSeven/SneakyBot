@@ -10,14 +10,13 @@ class SneakyBotConfig(parser: ArgParser) {
         "--host",
         help = "hostname or IP address of the TeamSpeak3 Server"
     )
-        .default("ts3.sapuseven.com")
 
     val port: Int by parser.storing(
         "-q",
         "--port",
         help = "the ServerQuery port of the TeamSpeak3 Server"
     ) { toInt() }
-        .default(17912)
+        .default(10011)
         .addValidator {
             if (value < 1 || value > 65535)
                 throw InvalidArgumentException("Invalid port (valid range: 1-65535)")
@@ -56,7 +55,7 @@ class SneakyBotConfig(parser: ArgParser) {
         "--servergroup",
         help = "id of the servergroup to copy for usage with SneakyBOT"
     ) { toInt() }
-        .default(6 /* Server Admin */)
+        .default(8 /* Guest */)
 
     val dataDir: String by parser.storing(
         "--data-dir",
