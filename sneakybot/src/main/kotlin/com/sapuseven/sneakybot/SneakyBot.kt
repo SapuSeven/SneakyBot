@@ -621,38 +621,12 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
         if (serverGroupId == -1) {
             log.debug("Not found :(")
             log.info("Generating server group...")
-            /*var isAdmin = false
-            for (client in query.api.getServerGroupClients(templateServerGroupId))
-                if (client.nickname == "SneakyBOT")
-                    isAdmin = true
-            if (!isAdmin)
-                query.api.usePrivilegeKey(query.api.addPrivilegeKeyServerGroup(templateServerGroupId, null))*/
             serverGroupId =
                 query.api.copyServerGroup(
                     botConfig.templateServerGroupId,
                     "SneakyBOT",
                     PermissionGroupDatabaseType.REGULAR
                 )
-            query.api.deleteServerGroupPermission(serverGroupId, "i_icon_id") // Remove icon
-            query.api.deleteServerGroupPermission(
-                serverGroupId,
-                "b_client_is_priority_speaker"
-            ) // Remove priority speaker status
-            query.api.addServerGroupPermission(
-                serverGroupId,
-                "i_client_kick_from_server_power",
-                76,
-                false,
-                false
-            ) // Increase kick from server power
-            /*query.api.getServerGroupClients(templateServerGroupId).stream()
-                .filter { client -> client.nickname == "SneakyBOT" }
-                .forEach {
-                    query.api.removeClientFromServerGroup(
-                        templateServerGroupId,
-                        query.api.whoAmI().databaseId
-                    )
-                }*/ // Remove myself from the template group
             log.debug("Finished, SneakyBOT Server Group created.")
         } else {
             log.info("Server group found.")
@@ -660,35 +634,6 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
 
         log.info("Server group discovery complete.")
         return serverGroupId
-    }
-
-    private fun checkIfInServerGroup(): Boolean {
-        return query.api.getServerGroupClients(serverGroupId).find { it.uniqueIdentifier == whoAmI.uniqueIdentifier } != null
-    }
-
-    private fun joinServerGroup() {
-        if (!checkIfInServerGroup()) {
-            log.debug("I am not in my server group yet.")
-            try {
-                query.api.addClientToServerGroup(serverGroupId, whoAmI.databaseId)
-
-                if (checkIfInServerGroup())
-                    log.debug("Now I am.")
-                else {
-                    throw Exception()
-                }
-            } catch (e: TS3CommandFailedException) {
-                logCommandFailed(e, "Failed to add SneakyBot to its server group")
-                query.exit()
-                exitProcess(1)
-            } catch (e: Exception) {
-                log.error("Failed to add SneakyBot to its server group.")
-                query.exit()
-                exitProcess(1)
-            }
-        } else {
-            log.debug("I am already in my server group.")
-        }
     }
 
     private fun quit() {
