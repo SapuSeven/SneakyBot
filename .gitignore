@@ -1,6 +1,6 @@
 .gradle
-.idea
+/.idea
 build
-data
-plugins
+/data
+/plugins
 !gradle-wrapper.jar
