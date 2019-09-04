@@ -17,10 +17,19 @@ dependencies {
     implementation("org.slf4j:slf4j-simple:1.7.2")
     implementation("com.github.theholywaffle:teamspeak3-api:1.2.0")
     implementation("com.xenomachina:kotlin-argparser:2.0.7")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.5.1")
+    testImplementation("io.mockk:mockk:1.9.3")
 }
 
 tasks.withType<KotlinCompile>().configureEach {
     kotlinOptions.jvmTarget = "1.8"
+}
+
+tasks.named<Test>("test") {
+    useJUnitPlatform()
+    testLogging {
+        events("passed", "skipped", "failed")
+    }
 }
 
 val fatJar = task("fatJar", type = Jar::class) {
