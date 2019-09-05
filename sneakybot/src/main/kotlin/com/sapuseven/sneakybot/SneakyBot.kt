@@ -687,7 +687,6 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
         return msg.startsWith("!")
     }
 
-
     @Throws(NoSuchClientException::class)
     fun getClientById(clientId: Int): Client {
         for (c in query.api.clients)
