@@ -1,14 +1,12 @@
 package com.sapuseven.sneakybot.utils
 
-import java.util.*
-
 class Command {
     var commandName: String? = null
     val parameters: ArrayList<Parameter> = ArrayList()
     var help: String = "(No help text found.)"
 
     companion object {
-        private const val PARAMETER_PATTERN = "^<([a-zA-Z_]*)>$|^\\[([a-zA-Z_]*)]$"
+        private const val PARAMETER_PATTERN = "^<(.*)>$|^\\[(.*)]$"
     }
 
     fun addParameter(parameter: String) {

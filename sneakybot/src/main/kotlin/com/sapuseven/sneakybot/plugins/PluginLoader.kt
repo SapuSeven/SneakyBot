@@ -15,6 +15,7 @@ import java.util.jar.JarInputStream
 object PluginLoader {
     private val log = LoggerFactory.getLogger(PluginLoader::class.java)
 
+    // TODO: Determine which exception is thrown for which error and document the function
     @Throws(MalformedURLException::class, NullPointerException::class)
     fun loadCommands(pluginDir: File): List<PluggableCommand> {
         val pluginJars = pluginDir.listFiles(JARFileFilter())
@@ -40,6 +41,7 @@ object PluginLoader {
         return plugins
     }
 
+    // TODO: Determine which exception is thrown for which error and document the function
     @Throws(MalformedURLException::class, NullPointerException::class)
     fun loadServices(pluginDir: File): List<PluggableService> {
         val pluginJars = pluginDir.listFiles(JARFileFilter())
