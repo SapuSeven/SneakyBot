@@ -6,7 +6,7 @@ import com.sapuseven.sneakybot.utils.ConsoleCommand
 import org.slf4j.LoggerFactory
 import kotlin.system.exitProcess
 
-class CommandReload(private val bot: SneakyBot) : BuiltinCommand() {
+internal class CommandReload(private val bot: SneakyBot) : BuiltinCommand() {
     override val command: Command = Command()
     private val log = LoggerFactory.getLogger(CommandReload::class.java)
 

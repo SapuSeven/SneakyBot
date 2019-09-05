@@ -4,7 +4,7 @@ import com.sapuseven.sneakybot.SneakyBot
 import com.sapuseven.sneakybot.utils.Command
 import com.sapuseven.sneakybot.utils.ConsoleCommand
 
-class CommandHelp(private val bot: SneakyBot) : BuiltinCommand() {
+internal class CommandHelp(private val bot: SneakyBot) : BuiltinCommand() {
     override val command: Command = Command()
 
     init {
