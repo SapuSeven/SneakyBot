@@ -12,7 +12,6 @@ import java.util.*
 import java.util.jar.JarEntry
 import java.util.jar.JarInputStream
 
-// TODO: Revise logging (especially priorities)
 object PluginLoader {
     private val log = LoggerFactory.getLogger(PluginLoader::class.java)
 
@@ -24,7 +23,7 @@ object PluginLoader {
         try {
             pluginClasses = extractClassesFromJARs(pluginJars, cl, PluggableCommand::class.java)
         } catch (e: IOException) {
-            e.printStackTrace()
+            log.warn("Error loading commands: ${e.message}")
             return emptyList()
         }
 
@@ -33,11 +32,9 @@ object PluginLoader {
             try {
                 plugins.add(plugin.getDeclaredConstructor().newInstance() as PluggableCommand)
             } catch (e: InstantiationException) {
-                log.error("Can't instantiate plugin: " + plugin.name)
-                e.printStackTrace()
+                log.error("Can't instantiate plugin \"${plugin.name}\": ${e.message}")
             } catch (e: IllegalAccessException) {
-                log.error("IllegalAccess for plugin: " + plugin.name)
-                e.printStackTrace()
+                log.error("IllegalAccess for plugin \"${plugin.name}\": ${e.message}")
             }
 
         return plugins
@@ -51,7 +48,7 @@ object PluginLoader {
         try {
             pluginClasses = extractClassesFromJARs(pluginJars, cl, PluggableService::class.java)
         } catch (e: IOException) {
-            e.printStackTrace()
+            log.warn("Error loading services: ${e.message}")
             return emptyList()
         }
 
@@ -60,11 +57,9 @@ object PluginLoader {
             try {
                 plugins.add(plugin.getDeclaredConstructor().newInstance() as PluggableService)
             } catch (e: InstantiationException) {
-                log.error("Can't instantiate plugin: " + plugin.name)
-                e.printStackTrace()
+                log.error("Can't instantiate plugin \"${plugin.name}\": ${e.message}")
             } catch (e: IllegalAccessException) {
-                log.error("IllegalAccess for plugin: " + plugin.name)
-                e.printStackTrace()
+                log.error("IllegalAccess for plugin \"${plugin.name}\": ${e.message}")
             }
 
         return plugins
@@ -98,8 +93,7 @@ object PluginLoader {
                     if (isPluggableClass(cls, pluginClass))
                         classes.add(cls)
                 } catch (e: ClassNotFoundException) {
-                    log.error("Can't load Class " + ent.name)
-                    e.printStackTrace()
+                    log.error("Can't load Class ${ent.name}: ${e.message}")
                 }
             ent = jarInputStream.nextJarEntry
         }
@@ -109,7 +103,6 @@ object PluginLoader {
     }
 
     private fun isPluggableClass(cls: Class<*>, pluginClass: Class<*>): Boolean {
-
         for (i in cls.interfaces)
             if (i == pluginClass)
                 return true
