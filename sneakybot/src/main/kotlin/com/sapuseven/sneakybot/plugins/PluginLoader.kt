@@ -31,7 +31,7 @@ object PluginLoader {
         val plugins = ArrayList<PluggableCommand>(pluginClasses.size)
         for (plugin in pluginClasses)
             try {
-                plugins.add(plugin.getDeclaredConstructor().newInstance() as PluggableCommand)
+                plugins.add((plugin.getDeclaredConstructor().newInstance() as? PluggableCommand) ?: throw InstantiationException("Cast failed"))
             } catch (e: InstantiationException) {
                 log.error("Can't instantiate plugin \"${plugin.name}\": ${e.message}")
             } catch (e: IllegalAccessException) {
@@ -57,7 +57,7 @@ object PluginLoader {
         val plugins = ArrayList<PluggableService>(pluginClasses.size)
         for (plugin in pluginClasses)
             try {
-                plugins.add(plugin.getDeclaredConstructor().newInstance() as PluggableService)
+                plugins.add((plugin.getDeclaredConstructor().newInstance() as? PluggableService) ?: throw InstantiationException("Cast failed"))
             } catch (e: InstantiationException) {
                 log.error("Can't instantiate plugin \"${plugin.name}\": ${e.message}")
             } catch (e: IllegalAccessException) {

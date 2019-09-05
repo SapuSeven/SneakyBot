@@ -10,12 +10,15 @@ class ServiceStats : PluggableService {
 
     @Throws(Exception::class)
     override fun preInit(pluginManager: PluginManager) {
+        // unused
     }
 
     override fun postInit(pluginManager: PluginManager) {
+        // unused
     }
 
     override fun stop(pluginManager: PluginManager) {
+        // unused
     }
 
     override fun onEventReceived(e: BaseEvent) {

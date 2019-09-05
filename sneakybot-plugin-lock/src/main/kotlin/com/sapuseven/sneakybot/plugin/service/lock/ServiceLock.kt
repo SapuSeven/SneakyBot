@@ -19,13 +19,17 @@ class ServiceLock : PluggableService {
         private const val ERROR_ID_ALREADY_MEMBER_OF_CHANNEL = 770
     }
 
-    override fun preInit(pluginManager: PluginManager) {}
+    override fun preInit(pluginManager: PluginManager) {
+        // unused
+    }
 
     override fun postInit(pluginManager: PluginManager) {
         whoAmI = pluginManager.api!!.whoAmI()
     }
 
-    override fun stop(pluginManager: PluginManager) {}
+    override fun stop(pluginManager: PluginManager) {
+        // unused
+    }
 
     override fun onEventReceived(e: BaseEvent) {
         if (e is ClientMovedEvent) {
@@ -101,23 +105,18 @@ class ServiceLock : PluggableService {
     }
 
     private fun unlockClient(clientId: Int, invokerId: Int): Boolean {
-        try {
-            var clientIndex = -1
-            for (i in lockedClients.indices)
-                if (lockedClients[i].clientId == clientId) {
-                    clientIndex = i
-                    break
-                }
-            return if (clientIndex >= 0) {
-                lockedClients.removeAt(clientIndex)
-                true
-            } else {
-                manager.sendMessage("Client not found!", invokerId)
-                false
+        var clientIndex = -1
+        for (i in lockedClients.indices)
+            if (lockedClients[i].clientId == clientId) {
+                clientIndex = i
+                break
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            return false
+        return if (clientIndex >= 0) {
+            lockedClients.removeAt(clientIndex)
+            true
+        } else {
+            manager.sendMessage("Client not found!", invokerId)
+            false
         }
     }
 }

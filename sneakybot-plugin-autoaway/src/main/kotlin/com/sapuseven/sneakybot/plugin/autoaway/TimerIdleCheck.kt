@@ -37,7 +37,7 @@ class TimerIdleCheck internal constructor(
 
                     if (!responseRequests.containsKey(c.id) && c.idleTime >= IDLE_TIME_THRESHOLD)
                         autoAwayRequestResponse(api, c)
-                    else if (responseRequests.containsKey(c.id) && currentTimeMillis() - responseRequests[c.id]!! >= IDLE_TIME_RESPONSE_THRESHOLD)
+                    else if (responseRequests.containsKey(c.id) && currentTimeMillis() - (responseRequests[c.id] ?: 0) >= IDLE_TIME_RESPONSE_THRESHOLD)
                         autoAway(api, c)
                 }
             }

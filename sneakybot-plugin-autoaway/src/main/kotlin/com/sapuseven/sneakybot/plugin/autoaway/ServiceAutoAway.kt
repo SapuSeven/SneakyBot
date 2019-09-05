@@ -27,18 +27,18 @@ class ServiceAutoAway : PluggableService {
     }
 
     override fun stop(pluginManager: PluginManager) {
-
+        // unused
     }
 
     override fun onEventReceived(e: BaseEvent) {
-
+        // unused
     }
 
     override fun onCommandExecuted(c: ConsoleCommand, invokerId: Int) {
-
+        // unused
     }
 
     override fun setPluginManager(pluginManager: PluginManager) {
-
+        // unused
     }
 }
