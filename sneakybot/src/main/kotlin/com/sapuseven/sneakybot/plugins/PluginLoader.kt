@@ -5,8 +5,7 @@ import java.io.File
 import java.io.FileFilter
 import java.io.FileInputStream
 import java.io.IOException
-import java.net.MalformedURLException
-import java.net.URL
+import java.lang.reflect.InvocationTargetException
 import java.net.URLClassLoader
 import java.util.*
 import java.util.jar.JarEntry
@@ -15,64 +14,46 @@ import java.util.jar.JarInputStream
 object PluginLoader {
     private val log = LoggerFactory.getLogger(PluginLoader::class.java)
 
-    // TODO: Determine which exception is thrown for which error and document the function
-    @Throws(MalformedURLException::class, NullPointerException::class)
-    fun loadCommands(pluginDir: File): List<PluggableCommand> {
-        val pluginJars = pluginDir.listFiles(JARFileFilter())
-        val cl = URLClassLoader(fileArrayToURLArray(pluginJars!!))
+    fun <T> loadPlugins(pluginDir: File, pluginClass: Class<*>): List<T> {
+        val pluginJars: Array<File>
+        val classLoader: URLClassLoader
         val pluginClasses: List<Class<*>>
+
         try {
-            pluginClasses = extractClassesFromJARs(pluginJars, cl, PluggableCommand::class.java)
-        } catch (e: IOException) {
-            log.warn("Error loading commands: ${e.message}")
+            pluginJars = pluginDir.listFiles(JARFileFilter()) ?: emptyArray()
+            classLoader = URLClassLoader(pluginJars.map { it.toURI().toURL() }.toTypedArray())
+        } catch (e: SecurityException) {
+            log.error("Plugin directory is unreadable! (SecurityException: ${e.message})")
             return emptyList()
         }
 
-        val plugins = ArrayList<PluggableCommand>(pluginClasses.size)
-        for (plugin in pluginClasses)
-            try {
-                plugins.add((plugin.getDeclaredConstructor().newInstance() as? PluggableCommand) ?: throw InstantiationException("Cast failed"))
-            } catch (e: InstantiationException) {
-                log.error("Can't instantiate plugin \"${plugin.name}\": ${e.message}")
-            } catch (e: IllegalAccessException) {
-                log.error("IllegalAccess for plugin \"${plugin.name}\": ${e.message}")
-            }
-
-        return plugins
-    }
-
-    // TODO: Determine which exception is thrown for which error and document the function
-    @Throws(MalformedURLException::class, NullPointerException::class)
-    fun loadServices(pluginDir: File): List<PluggableService> {
-        val pluginJars = pluginDir.listFiles(JARFileFilter())
-        val cl = URLClassLoader(fileArrayToURLArray(pluginJars!!))
-        val pluginClasses: List<Class<*>>
         try {
-            pluginClasses = extractClassesFromJARs(pluginJars, cl, PluggableService::class.java)
+            pluginClasses = extractClassesFromJARs(pluginJars, classLoader, pluginClass)
         } catch (e: IOException) {
-            log.warn("Error loading services: ${e.message}")
+            log.error("IOException while loading plugins: ${e.message}")
             return emptyList()
         }
 
-        val plugins = ArrayList<PluggableService>(pluginClasses.size)
+        val plugins = ArrayList<T>(pluginClasses.size)
         for (plugin in pluginClasses)
             try {
-                plugins.add((plugin.getDeclaredConstructor().newInstance() as? PluggableService) ?: throw InstantiationException("Cast failed"))
-            } catch (e: InstantiationException) {
-                log.error("Can't instantiate plugin \"${plugin.name}\": ${e.message}")
+                @Suppress("UNCHECKED_CAST") // already checked in isPluggableClass
+                plugins.add(plugin.getDeclaredConstructor().newInstance() as T)
+            } catch (e: NoSuchMethodException) {
+                log.error("Plugin \"${plugin.name}\" is missing a constructor! (${e.message})")
             } catch (e: IllegalAccessException) {
-                log.error("IllegalAccess for plugin \"${plugin.name}\": ${e.message}")
+                log.error("Plugin \"${plugin.name}\" has no accessible constructor! (${e.message})")
+            } catch (e: IllegalArgumentException) {
+                log.error("Plugin \"${plugin.name}\" has unexpected constructor parameters! (${e.message})")
+            } catch (e: InstantiationException) {
+                log.error("Plugin \"${plugin.name}\" has an abstract constructor! (${e.message})")
+            } catch (e: InvocationTargetException) {
+                log.error("Plugin \"${plugin.name}\" constructor threw an exception! (${e.message})")
+            } catch (e: ExceptionInInitializerError) {
+                log.error("Plugin \"${plugin.name}\" could not be initialized! (${e.message})")
             }
 
         return plugins
-    }
-
-    @Throws(MalformedURLException::class, NullPointerException::class)
-    private fun fileArrayToURLArray(files: Array<File>): Array<URL?> {
-        val urls = arrayOfNulls<URL>(files.size)
-        for (i in files.indices)
-            urls[i] = files[i].toURI().toURL()
-        return urls
     }
 
     @Throws(IOException::class)

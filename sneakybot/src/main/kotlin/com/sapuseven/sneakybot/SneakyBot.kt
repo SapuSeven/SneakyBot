@@ -22,7 +22,6 @@ import com.xenomachina.argparser.ArgParser
 import com.xenomachina.argparser.mainBody
 import org.slf4j.LoggerFactory
 import java.io.File
-import java.net.MalformedURLException
 import java.util.*
 import kotlin.collections.set
 import kotlin.system.exitProcess
@@ -331,22 +330,20 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
     }
 
     internal fun loadPlugins() {
-        try {
-            commands.clear()
-            commands.addAll(PluginLoader.loadCommands(File(botConfig.pluginDir)))
-            services.clear()
-            services.addAll(PluginLoader.loadServices(File(botConfig.pluginDir)))
-        } catch (e: MalformedURLException) {
+        val pluginDir = File(botConfig.pluginDir)
+        if (!pluginDir.exists()) {
             log.warn("Plugin directory not found!")
-        } catch (e: NullPointerException) {
-            log.warn("Plugin directory not found!")
-        } finally {
-            manager = PluginManagerImpl(this)
+            return
         }
 
-        for (p in commands) {
+        commands.clear()
+        commands.addAll(PluginLoader.loadPlugins(pluginDir, PluggableCommand::class.java))
+        services.clear()
+        services.addAll(PluginLoader.loadPlugins(pluginDir, PluggableService::class.java))
+        manager = PluginManagerImpl(this)
+
+        for (p in commands)
             p.setPluginManager(manager)
-        }
     }
 
     internal fun stopPlugins() {

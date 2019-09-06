@@ -21,7 +21,7 @@ class PluginLoaderTest {
             mockk<PluggableCommand> {}::class.java
         )
 
-        val commands = PluginLoader.loadCommands(pluginDir)
+        val commands = PluginLoader.loadPlugins<PluggableCommand>(pluginDir, PluggableCommand::class.java)
 
         Assertions.assertEquals(1, commands.size)
     }
@@ -41,7 +41,7 @@ class PluginLoaderTest {
             )
         } throws IOException()
 
-        val commands = PluginLoader.loadCommands(pluginDir)
+        val commands = PluginLoader.loadPlugins<PluggableCommand>(pluginDir, PluggableCommand::class.java)
         Assertions.assertEquals(0, commands.size)
     }
 
@@ -56,7 +56,7 @@ class PluginLoaderTest {
             mockk<PluggableService>{}::class.java
         )
 
-        val services = PluginLoader.loadServices(pluginDir)
+        val services = PluginLoader.loadPlugins<PluggableService>(pluginDir, PluggableService::class.java)
 
         Assertions.assertEquals(1, services.size)
     }
@@ -76,7 +76,7 @@ class PluginLoaderTest {
             )
         } throws IOException()
 
-        val services = PluginLoader.loadServices(pluginDir)
+        val services = PluginLoader.loadPlugins<PluggableService>(pluginDir, PluggableService::class.java)
         Assertions.assertEquals(0, services.size)
     }
 }
