@@ -15,7 +15,7 @@ class CommandPanic : PluggableCommand {
         get() {
             val cmd = Command()
             cmd.commandName = "panic"
-            cmd.addParameter("<\"everywhere \">")
+            cmd.addParameter("<\"everywhere\">")
             cmd.help =
                 "Bans every client in the current channel for one second (except yourself).\n" + "If 'everywhere' is specified, this affects all clients on the whole server."
             return cmd
