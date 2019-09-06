@@ -29,8 +29,8 @@ class EventListenerImplementation(private val bot: SneakyBot) : TS3Listener {
     }
 
     override fun onChannelEdit(e: ChannelEditedEvent) {
-        bot.getConsoleChannel()
-
+        if (e.channelId == bot.consoleChannelId)
+            findNewConsoleChannel()
         sendEventToServices(e)
     }
 
@@ -43,8 +43,8 @@ class EventListenerImplementation(private val bot: SneakyBot) : TS3Listener {
     }
 
     override fun onChannelDeleted(e: ChannelDeletedEvent) {
-        bot.getConsoleChannel()
-
+        if (e.channelId == bot.consoleChannelId)
+            findNewConsoleChannel()
         sendEventToServices(e)
     }
 
@@ -58,6 +58,10 @@ class EventListenerImplementation(private val bot: SneakyBot) : TS3Listener {
 
     override fun onPrivilegeKeyUsed(e: PrivilegeKeyUsedEvent) {
         sendEventToServices(e)
+    }
+
+    private fun findNewConsoleChannel() {
+        bot.consoleChannelId = bot.getConsoleChannel() ?: bot.createConsoleChannel()
     }
 
     private fun sendEventToServices(e: BaseEvent) {
