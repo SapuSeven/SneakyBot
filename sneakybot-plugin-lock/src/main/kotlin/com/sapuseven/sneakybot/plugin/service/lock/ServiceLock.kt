@@ -33,7 +33,7 @@ class ServiceLock : PluggableService {
 
     override fun onEventReceived(e: BaseEvent) {
         if (e is ClientMovedEvent && e.invokerId != whoAmI.id) // Prevent conflicts with other automated moving plugins
-                moveIfLocked(e.clientId)
+            moveIfLocked(e.clientId)
 
         if (e is ClientJoinEvent) {
             refreshListWithClient(e.clientNickname, e.clientId)
@@ -41,30 +41,34 @@ class ServiceLock : PluggableService {
         }
     }
 
-    override fun onCommandExecuted(c: ConsoleCommand, invokerId: Int) {
-        if (c.getParam(0) == "lock")
-            try {
-                if (lockClient(Integer.parseInt(c.getParam(1)), Integer.parseInt(c.getParam(2)))) {
-                    manager.sendMessage("Successfully locked client to channel.", invokerId)
-                    moveIfLocked(Integer.parseInt(c.getParam(1)))
-                } else {
-                    manager.sendMessage("An unknown error occurred.", invokerId)
-                }
-            } catch (e: NumberFormatException) {
-                manager.sendMessage("Invalid clientId or channelId!", invokerId)
-            }
-        else if (c.getParam(0) == "unlock")
-            try {
-                if (unlockClient(Integer.parseInt(c.getParam(1)), invokerId)) {
-                    manager.sendMessage("Successfully unlocked client.", invokerId)
-                    // TODO: Move back to original channel
-                } else {
-                    manager.sendMessage("An unknown error occurred.", invokerId)
-                }
-            } catch (e: NumberFormatException) {
-                manager.sendMessage("Invalid clientId!", invokerId)
-            }
+    override fun onCommandExecuted(cmd: ConsoleCommand, invokerId: Int) {
+        when (cmd.getParam(0)) {
+            "lock" -> {
+                val targetUserId = cmd.getParam(1).toIntOrNull() ?: return sendHelpMessage("lock", invokerId)
+                val targetChannelId = cmd.getParam(2).toIntOrNull() ?: return sendHelpMessage("lock", invokerId)
 
+                if (lockClient(targetUserId, targetChannelId, invokerId)) {
+                    manager.sendMessage("Successfully locked client to channel.", invokerId)
+                    moveIfLocked(targetUserId)
+                } else
+                    manager.sendMessage("An unknown error occurred.", invokerId)
+            }
+            "unlock" -> {
+                val targetUserId = cmd.getParam(1).toIntOrNull() ?: return sendHelpMessage("unlock", invokerId)
+
+                if (unlockClient(targetUserId, invokerId))
+                    manager.sendMessage("Successfully unlocked client.", invokerId)
+                else
+                    manager.sendMessage("An unknown error occurred.", invokerId)
+            }
+        }
+    }
+
+    private fun sendHelpMessage(commandName: String, invokerId: Int) {
+        manager.sendMessage(
+            "This isn't the right way of using this command!\nTry '!help $commandName'",
+            invokerId
+        )
     }
 
     private fun moveIfLocked(clientId: Int) {
@@ -91,13 +95,14 @@ class ServiceLock : PluggableService {
         this.manager = pluginManager
     }
 
-    private fun lockClient(clientId: Int, channelId: Int): Boolean {
+    private fun lockClient(clientId: Int, channelId: Int, invokerId: Int): Boolean {
+        // TODO: Check if client and channel actually exist
         return try {
             val clientName = manager.getClientNameById(clientId)
             lockedClients.add(ClientChannelPair(clientName, clientId, channelId))
             true
-        } catch (e: Exception) {
-            e.printStackTrace()
+        } catch (e: TS3CommandFailedException) {
+            manager.sendMessage("Client not found!", invokerId)
             false
         }
 

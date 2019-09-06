@@ -88,17 +88,7 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
 
         serverGroupId = discoverServerGroup()
 
-        // Look for clients in my server group; If there are any, switch to direct mode
-        for (serverGroupClient in query.api.getServerGroupClients(serverGroupId)) {
-            if (serverGroupClient.nickname != botConfig.username) {
-                for (onlineClient in query.api.clients) {
-                    if (onlineClient.nickname != botConfig.username && onlineClient.uniqueIdentifier == serverGroupClient.uniqueIdentifier) {
-                        directClients.add(onlineClient.id)
-                        mode = MODE_DIRECT
-                    }
-                }
-            }
-        }
+        lookForDirectClients()
 
         log.debug("Registering all event listeners...")
         query.api.registerAllEvents()
@@ -116,6 +106,23 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
             sendDirectMessage("SneakyBOT is now online. Please use the direct chat for commands.")
 
         query.api.addTS3Listeners(EventListenerImplementation(this))
+    }
+
+    /**
+     * Looks for clients in the SneakyBOT server group.
+     * If so, switch to direct mode.
+     */
+    private fun lookForDirectClients() {
+        for (serverGroupClient in query.api.getServerGroupClients(serverGroupId)) {
+            if (serverGroupClient.nickname != botConfig.username) {
+                for (onlineClient in query.api.clients) {
+                    if (onlineClient.nickname != botConfig.username && onlineClient.uniqueIdentifier == serverGroupClient.uniqueIdentifier) {
+                        directClients.add(onlineClient.id)
+                        mode = MODE_DIRECT
+                    }
+                }
+            }
+        }
     }
 
     internal fun interpretClientMoved(event: ClientMovedEvent) {

@@ -44,6 +44,7 @@ interface PluginManager {
      * @return The clients name.
      * @throws Exception When the client cannot be found.
      */
+    // TODO: Switch to a more specific exception type
     @Throws(Exception::class)
     fun getClientNameById(clientId: Int): String
 

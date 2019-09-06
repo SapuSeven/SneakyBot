@@ -20,7 +20,7 @@ class CommandChannels : PluggableCommand {
         }
 
     override fun execute(cmd: ConsoleCommand, invokerId: Int): Boolean {
-        manager.api?.let { api ->
+        return manager.api?.let { api ->
             var channelList = ""
             val channels = api.channels
             channels.sortWith(ChannelComparator())
@@ -35,10 +35,8 @@ class CommandChannels : PluggableCommand {
             }
 
             manager.sendMessage("\nChannel list:\n$channelList", invokerId)
-            return true
-        } ?: run {
-            return false
-        }
+            true
+        } ?: false
     }
 
     private fun allParams(cmd: ConsoleCommand): String {

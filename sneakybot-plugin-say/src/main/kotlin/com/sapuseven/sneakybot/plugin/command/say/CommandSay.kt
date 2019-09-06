@@ -20,12 +20,13 @@ class CommandSay : PluggableCommand {
         }
 
     override fun execute(cmd: ConsoleCommand, invokerId: Int): Boolean {
-        manager.api?.let { api ->
-            return if (cmd.paramCount() == 3) {
-                if (cmd.getParam(2).replace(" ", "").length >= 3) {
+        return manager.api?.let { api ->
+            val whoAmI = api.whoAmI()
+            if (cmd.paramCount() == 3) {
+                if (cmd.getParam(2).replace("\\w".toRegex(), "").length >= 3) {
                     api.setNickname(cmd.getParam(2))
                     api.sendServerMessage(cmd.getParam(1))
-                    api.setNickname("SneakyBOT")
+                    api.setNickname(whoAmI.nickname)
                     true
                 } else {
                     manager.sendMessage("USERNAME has to be a minimum of 3 chars long.", invokerId)
@@ -35,9 +36,7 @@ class CommandSay : PluggableCommand {
                 manager.sendMessage("This isn't the right way of using this command!\nTry '!help ${command.commandName}'", invokerId)
                 false
             }
-        } ?: run {
-            return false
-        }
+        } ?: false
     }
 
     override fun setPluginManager(pluginManager: PluginManager) {

@@ -37,7 +37,7 @@ interface PluggableService {
     /**
      * This method is being executed when a user executes a command.
      */
-    fun onCommandExecuted(c: ConsoleCommand, invokerId: Int)
+    fun onCommandExecuted(cmd: ConsoleCommand, invokerId: Int)
 
     /**
      * Use ths method to obtain a [PluginManager] object which allows you to interact with the bot.
