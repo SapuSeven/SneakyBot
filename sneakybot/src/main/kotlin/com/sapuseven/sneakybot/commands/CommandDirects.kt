@@ -35,7 +35,7 @@ internal class CommandDirects(private val bot: SneakyBot) : BuiltinCommand() {
 
     private fun sendHelpMessage(invokerId: Int): Boolean {
         bot.manager.sendMessage(
-            "This isn't the right way of using this command!\nTry '!help directs'",
+            "This isn't the right way of using this command!\nTry '!help ${command.commandName}'",
             invokerId
         )
         return false
@@ -54,7 +54,7 @@ internal class CommandDirects(private val bot: SneakyBot) : BuiltinCommand() {
             bot.directClients.remove(targetUserId)
             bot.query.api.sendPrivateMessage(
                 targetUserId,
-                "Direct chat is now closed. You can send me commands via the SneakyBOT Console channel."
+                "Direct chat is now closed. You can send me commands via the ${bot.botConfig.consoleName} channel."
             )
             bot.query.api.removeClientFromServerGroup(
                 bot.serverGroupId,

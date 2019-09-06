@@ -9,6 +9,10 @@ import kotlin.concurrent.thread
 class CommandPoke : PluggableCommand {
     private lateinit var manager: PluginManager
 
+    companion object {
+        private const val MAX_COUNT = 50
+    }
+
     override val command: Command
         get() {
             val cmd = Command()
@@ -16,63 +20,46 @@ class CommandPoke : PluggableCommand {
             cmd.addParameter("[client_id]")
             cmd.addParameter("<count>")
             cmd.addParameter("<message>")
-            cmd.help = "Pokes a client COUNT times with MESSAGE.\n" + "COUNT can be a maximum of 50."
+            cmd.help = "Pokes a client COUNT times with MESSAGE.\nCOUNT can be a maximum of $MAX_COUNT."
             return cmd
         }
 
     override fun execute(cmd: ConsoleCommand, invokerId: Int): Boolean {
-        // simple poke
-        if (cmd.paramCount() == 2) {
-            return try {
-                manager.api?.pokeClient(Integer.parseInt(cmd.getParam(1)), "") != null
-            } catch (e: NumberFormatException) {
-                manager.sendMessage(
-                    "You specified an invalid client id!\nTry '!help poke' for more information about the correct syntax.",
-                    invokerId
-                )
-                false
-            }
-            // multi poke
-        } else if (cmd.paramCount() == 3 || cmd.paramCount() == 4) {
-            val count: Int
-
-            try {
-                count = Integer.parseInt(cmd.getParam(2))
-                if (count > 50) {
-                    manager.sendMessage("You can't poke a client more than 50 times at once!", invokerId)
-                    return false
-                }
-            } catch (e: NumberFormatException) {
-                manager.sendMessage(
-                    "You specified an invalid number of pokes!\nTry '!help poke' for more information about the correct syntax.",
-                    invokerId
-                )
-                return false
-            }
-
-            return try {
-                multiPoke(Integer.parseInt(cmd.getParam(1)), if (cmd.paramCount() == 4) cmd.getParam(3) else "", count)
+        return when (cmd.paramCount()) {
+            2 -> {
+                val targetUserId = cmd.getParam(1).toIntOrNull() ?: return sendHelpMessage(invokerId)
+                manager.api?.pokeClient(targetUserId, "")
                 true
-            } catch (e: NumberFormatException) {
-                manager.sendMessage(
-                    "You specified an invalid client id!\nTry '!help poke' for more information about the correct syntax.",
-                    invokerId
-                )
-                false
             }
-        } else {
-            manager.sendMessage("This isn't the right way of using this command!\nTry '!help poke'", invokerId)
-            return false
+            3, 4 -> {
+                val targetUserId = cmd.getParam(1).toIntOrNull() ?: return sendHelpMessage(invokerId)
+                val count = cmd.getParam(2).toIntOrNull() ?: return sendHelpMessage(invokerId)
+
+                multiPoke(targetUserId, invokerId, if (cmd.paramCount() == 4) cmd.getParam(3) else "", count)
+            }
+            else -> sendHelpMessage(invokerId)
         }
     }
 
-    private fun multiPoke(clientId: Int, message: String, count: Int = 1) {
+    private fun sendHelpMessage(invokerId: Int): Boolean {
+        manager.sendMessage(
+            "This isn't the right way of using this command!\nTry '!help ${command.commandName}'",
+            invokerId
+        )
+        return false
+    }
+
+    private fun multiPoke(clientId: Int, invokerId: Int, message: String, count: Int = 1): Boolean {
+        if (count > MAX_COUNT) return sendHelpMessage(invokerId)
+
         thread {
             for (i in 0 until count) {
                 manager.api?.pokeClient(clientId, message)
                 Thread.sleep(500)
             }
         }
+
+        return true
     }
 
     override fun setPluginManager(pluginManager: PluginManager) {

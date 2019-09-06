@@ -32,7 +32,7 @@ class CommandSay : PluggableCommand {
                     false
                 }
             } else {
-                manager.sendMessage("This isn't the right way of using this command!\nTry '!help say'", invokerId)
+                manager.sendMessage("This isn't the right way of using this command!\nTry '!help ${command.commandName}'", invokerId)
                 false
             }
         } ?: run {
