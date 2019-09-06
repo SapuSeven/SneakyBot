@@ -12,8 +12,8 @@ class ServiceAutoAway : PluggableService {
 
     @Throws(Exception::class)
     override fun preInit(pluginManager: PluginManager) {
-
-    }
+        // unused
+   }
 
     override fun postInit(pluginManager: PluginManager) {
         pluginManager.api?.let { api ->

@@ -32,10 +32,9 @@ class ServiceLock : PluggableService {
     }
 
     override fun onEventReceived(e: BaseEvent) {
-        if (e is ClientMovedEvent) {
-            if (e.invokerId != whoAmI.id) // Prevent conflicts with other automated moving plugins
+        if (e is ClientMovedEvent && e.invokerId != whoAmI.id) // Prevent conflicts with other automated moving plugins
                 moveIfLocked(e.clientId)
-        }
+
         if (e is ClientJoinEvent) {
             refreshListWithClient(e.clientNickname, e.clientId)
             moveIfLocked(e.clientId)

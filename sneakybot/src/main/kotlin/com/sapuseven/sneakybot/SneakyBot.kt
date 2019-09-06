@@ -248,12 +248,6 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
                     }
                 }
             } else {
-                /*if (event.message != "!call") {
-                    if (mode != MODE_DIRECT)
-                        setupMode(MODE_DIRECT)
-                    else
-                        manager.sendMessage("Mode is already set to DIRECT!", event.invokerId)
-                }*/
                 log.info("User " + event.invokerName + " tried to execute a command via SERVER chat: " + event.message)
                 query.api.sendServerMessage("Sorry, I can only accept commands from the SneakyBot Console Channel!")
             }
