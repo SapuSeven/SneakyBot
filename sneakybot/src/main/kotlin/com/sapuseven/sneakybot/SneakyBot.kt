@@ -5,7 +5,8 @@ import com.github.theholywaffle.teamspeak3.TS3Query
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty
 import com.github.theholywaffle.teamspeak3.api.PermissionGroupDatabaseType
 import com.github.theholywaffle.teamspeak3.api.TextMessageTargetMode
-import com.github.theholywaffle.teamspeak3.api.event.*
+import com.github.theholywaffle.teamspeak3.api.event.ClientMovedEvent
+import com.github.theholywaffle.teamspeak3.api.event.TextMessageEvent
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException
 import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException
 import com.github.theholywaffle.teamspeak3.api.wrapper.Client
@@ -17,6 +18,7 @@ import com.sapuseven.sneakybot.plugins.PluggableService
 import com.sapuseven.sneakybot.plugins.PluginLoader
 import com.sapuseven.sneakybot.plugins.Timer
 import com.sapuseven.sneakybot.utils.ConsoleCommand
+import com.sapuseven.sneakybot.utils.EventListenerImplementation
 import com.sapuseven.sneakybot.utils.SneakyBotConfig
 import com.xenomachina.argparser.ArgParser
 import com.xenomachina.argparser.mainBody
@@ -116,80 +118,10 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
         else if (mode == MODE_DIRECT)
             sendDirectMessage("SneakyBOT is now online. Please use the direct chat for commands.")
 
-        setupListeners()
+        query.api.addTS3Listeners(EventListenerImplementation(this))
     }
 
-    private fun setupListeners() {
-        query.api.addTS3Listeners(object : TS3Listener {
-            override fun onTextMessage(e: TextMessageEvent) {
-                interpretTextMessage(e)
-
-                for (p in services)
-                    p.onEventReceived(e)
-            }
-
-            override fun onServerEdit(e: ServerEditedEvent) {
-                for (p in services)
-                    p.onEventReceived(e)
-            }
-
-            override fun onClientMoved(e: ClientMovedEvent) {
-                interpretClientMoved(e)
-
-                for (p in services)
-                    p.onEventReceived(e)
-            }
-
-            override fun onClientLeave(e: ClientLeaveEvent) {
-                for (p in services)
-                    p.onEventReceived(e)
-            }
-
-            override fun onClientJoin(e: ClientJoinEvent) {
-                for (p in services)
-                    p.onEventReceived(e)
-            }
-
-            override fun onChannelEdit(e: ChannelEditedEvent) {
-                for (p in services)
-                    p.onEventReceived(e)
-            }
-
-            override fun onChannelDescriptionChanged(e: ChannelDescriptionEditedEvent) {
-                for (p in services)
-                    p.onEventReceived(e)
-            }
-
-            override fun onChannelCreate(e: ChannelCreateEvent) {
-                for (p in services)
-                    p.onEventReceived(e)
-            }
-
-            override fun onChannelDeleted(e: ChannelDeletedEvent) {
-                getConsoleChannel()
-
-                for (p in services)
-                    p.onEventReceived(e)
-            }
-
-            override fun onChannelMoved(e: ChannelMovedEvent) {
-                for (p in services)
-                    p.onEventReceived(e)
-            }
-
-            override fun onChannelPasswordChanged(e: ChannelPasswordChangedEvent) {
-                for (p in services)
-                    p.onEventReceived(e)
-            }
-
-            override fun onPrivilegeKeyUsed(e: PrivilegeKeyUsedEvent) {
-                for (p in services)
-                    p.onEventReceived(e)
-            }
-        })
-    }
-
-    private fun interpretClientMoved(event: ClientMovedEvent) {
+    internal fun interpretClientMoved(event: ClientMovedEvent) {
         if (event.targetChannelId == consoleChannelId) {
             val name = query.api.getClientInfo(event.clientId).nickname
             log.info("User $name entered the SneakyBOT Console channel.")
@@ -201,7 +133,7 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
         }
     }
 
-    private fun interpretTextMessage(event: TextMessageEvent) {
+    internal fun interpretTextMessage(event: TextMessageEvent) {
         if (isCommand(event.message) && event.invokerId != whoAmI.id) {
             if (event.targetMode != TextMessageTargetMode.SERVER) {
                 if (mode == MODE_DIRECT) {
@@ -487,7 +419,7 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
         return channelId
     }
 
-    private fun getConsoleChannel(): Int {
+    internal fun getConsoleChannel(): Int {
         log.debug("Searching for an existing console channel...")
         val consoleChannel = query.api.channels.find { it.name == botConfig.consoleName }
         if (consoleChannel == null)
