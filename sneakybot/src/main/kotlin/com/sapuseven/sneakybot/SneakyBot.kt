@@ -72,9 +72,6 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
         } catch (e: TS3CommandFailedException) {
             logCommandFailed(e, "Login failed")
             exitProcess(1)
-        } catch (e: Exception) {
-            log.error("Unknown error: ${e.message}")
-            exitProcess(1)
         }
 
         consoleChannelId = getConsoleChannel() ?: createConsoleChannel()

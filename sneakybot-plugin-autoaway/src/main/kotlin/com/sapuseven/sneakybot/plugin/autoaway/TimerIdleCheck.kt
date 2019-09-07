@@ -28,18 +28,23 @@ class TimerIdleCheck internal constructor(
             for (c in api.clients) {
                 log.debug(c.nickname + " is idle for " + c.idleTime / 1000 + " seconds")
 
-                if (c.id != whoAmI.id
-                    && c.channelId != afkChannel?.id ?: -1
-                    && c.channelId != defaultChannel?.id ?: -1
-                ) {
-                    if (responseRequests.containsKey(c.id) && c.idleTime < IDLE_TIME_THRESHOLD)
-                        responseRequests.remove(c.id)
+                if (
+                    c.id == whoAmI.id ||
+                    c.channelId == afkChannel?.id ?: c.channelId ||
+                    c.channelId == defaultChannel?.id ?: c.channelId
+                ) continue
 
-                    if (!responseRequests.containsKey(c.id) && c.idleTime >= IDLE_TIME_THRESHOLD)
-                        autoAwayRequestResponse(api, c)
-                    else if (responseRequests.containsKey(c.id) && currentTimeMillis() - (responseRequests[c.id] ?: 0) >= IDLE_TIME_RESPONSE_THRESHOLD)
-                        autoAway(api, c)
-                }
+                if (responseRequests.containsKey(c.id) && c.idleTime < IDLE_TIME_THRESHOLD)
+                    responseRequests.remove(c.id)
+
+                if (
+                    !responseRequests.containsKey(c.id) &&
+                    c.idleTime >= IDLE_TIME_THRESHOLD
+                ) autoAwayRequestResponse(api, c)
+                else if (
+                    responseRequests.containsKey(c.id) &&
+                    currentTimeMillis() - (responseRequests[c.id] ?: 0) >= IDLE_TIME_RESPONSE_THRESHOLD
+                ) autoAway(api, c)
             }
         }
     }
