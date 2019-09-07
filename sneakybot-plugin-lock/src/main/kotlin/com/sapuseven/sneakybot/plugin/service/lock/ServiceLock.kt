@@ -5,6 +5,7 @@ import com.github.theholywaffle.teamspeak3.api.event.ClientJoinEvent
 import com.github.theholywaffle.teamspeak3.api.event.ClientMovedEvent
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException
 import com.github.theholywaffle.teamspeak3.api.wrapper.ServerQueryInfo
+import com.sapuseven.sneakybot.exceptions.NoSuchClientException
 import com.sapuseven.sneakybot.plugins.PluggableService
 import com.sapuseven.sneakybot.plugins.PluginManager
 import com.sapuseven.sneakybot.utils.ConsoleCommand
@@ -44,24 +45,31 @@ class ServiceLock : PluggableService {
     override fun onCommandExecuted(cmd: ConsoleCommand, invokerId: Int) {
         when (cmd.getParam(0)) {
             "lock" -> {
+                if (cmd.paramCount() != 3) sendHelpMessage("lock", invokerId)
+
                 val targetUserId = cmd.getParam(1).toIntOrNull() ?: return sendHelpMessage("lock", invokerId)
                 val targetChannelId = cmd.getParam(2).toIntOrNull() ?: return sendHelpMessage("lock", invokerId)
 
                 if (lockClient(targetUserId, targetChannelId, invokerId)) {
-                    manager.sendMessage("Successfully locked client to channel.", invokerId)
-                    moveIfLocked(targetUserId)
-                } else
-                    manager.sendMessage("An unknown error occurred.", invokerId)
+                    if (moveIfLocked(targetUserId, invokerId))
+                        manager.sendMessage("Successfully locked client to channel.", invokerId)
+                    else
+                        unlockClient(targetUserId)
+                }
             }
             "unlock" -> {
+                if (cmd.paramCount() != 2) sendHelpMessage("unlock", invokerId)
+
                 val targetUserId = cmd.getParam(1).toIntOrNull() ?: return sendHelpMessage("unlock", invokerId)
 
                 if (unlockClient(targetUserId, invokerId))
                     manager.sendMessage("Successfully unlocked client.", invokerId)
-                else
-                    manager.sendMessage("An unknown error occurred.", invokerId)
             }
         }
+    }
+
+    override fun setPluginManager(pluginManager: PluginManager) {
+        this.manager = pluginManager
     }
 
     private fun sendHelpMessage(commandName: String, invokerId: Int) {
@@ -71,17 +79,23 @@ class ServiceLock : PluggableService {
         )
     }
 
-    private fun moveIfLocked(clientId: Int) {
+    @Throws(TS3CommandFailedException::class)
+    private fun moveIfLocked(clientId: Int, invokerId: Int? = null): Boolean {
         for (lockedClient in lockedClients) {
             if (lockedClient.clientId == clientId)
                 try {
                     manager.api?.moveClient(clientId, lockedClient.channelId)
+                    return true
                 } catch (e: TS3CommandFailedException) {
-                    if (e.error.id != ERROR_ID_ALREADY_MEMBER_OF_CHANNEL)
-                        throw e
+                    if (e.error.id != ERROR_ID_ALREADY_MEMBER_OF_CHANNEL) {
+                        invokerId?.let { manager.sendMessage("Client could not be moved: ${e.error.message}", it) }
+                        unlockClient(clientId)
+                        return false
+                    }
                 }
-
         }
+        invokerId?.let { manager.sendMessage("Client not found!", it) }
+        return false
     }
 
     private fun refreshListWithClient(clientNickname: String, clientId: Int) {
@@ -91,24 +105,20 @@ class ServiceLock : PluggableService {
         }
     }
 
-    override fun setPluginManager(pluginManager: PluginManager) {
-        this.manager = pluginManager
-    }
-
-    private fun lockClient(clientId: Int, channelId: Int, invokerId: Int): Boolean {
-        // TODO: Check if client and channel actually exist
+    private fun lockClient(clientId: Int, channelId: Int, invokerId: Int? = null): Boolean {
         return try {
             val clientName = manager.getClientNameById(clientId)
+            lockedClients.removeAll { it.clientId == clientId }
             lockedClients.add(ClientChannelPair(clientName, clientId, channelId))
             true
-        } catch (e: TS3CommandFailedException) {
-            manager.sendMessage("Client not found!", invokerId)
+        } catch (e: NoSuchClientException) {
+            invokerId?.let { manager.sendMessage("Client not found!", it) }
             false
         }
 
     }
 
-    private fun unlockClient(clientId: Int, invokerId: Int): Boolean {
+    private fun unlockClient(clientId: Int, invokerId: Int? = null): Boolean {
         var clientIndex = -1
         for (i in lockedClients.indices)
             if (lockedClients[i].clientId == clientId) {
@@ -119,7 +129,7 @@ class ServiceLock : PluggableService {
             lockedClients.removeAt(clientIndex)
             true
         } else {
-            manager.sendMessage("Client not found!", invokerId)
+            invokerId?.let { manager.sendMessage("Client not found!", it) }
             false
         }
     }
