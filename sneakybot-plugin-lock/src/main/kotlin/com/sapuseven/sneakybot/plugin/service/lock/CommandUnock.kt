@@ -17,9 +17,7 @@ class CommandUnock : PluggableCommand {
             return cmd
         }
 
-    override fun execute(cmd: ConsoleCommand, invokerId: Int): Boolean {
-        return true
-    }
+    override fun execute(cmd: ConsoleCommand, invokerId: Int): Boolean = true
 
     override fun setPluginManager(pluginManager: PluginManager) {
         this.manager = pluginManager

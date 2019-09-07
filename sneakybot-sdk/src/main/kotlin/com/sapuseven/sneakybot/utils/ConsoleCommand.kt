@@ -1,20 +1,10 @@
 @file:Suppress("unused", "UNUSED_PARAMETER")
-
 package com.sapuseven.sneakybot.utils
 
-class ConsoleCommand(command: String) {
-    val commandName: String
-        get() = ""
+abstract class ConsoleCommand(command: String) {
+    abstract val commandName: String
 
-    fun getParam(index: Int): String {
-        return ""
-    }
+    abstract fun getParam(index: Int): String
 
-    fun paramCount(): Int {
-        return 0
-    }
-
-    override fun toString(): String {
-        return ""
-    }
+    abstract fun paramCount(): Int
 }

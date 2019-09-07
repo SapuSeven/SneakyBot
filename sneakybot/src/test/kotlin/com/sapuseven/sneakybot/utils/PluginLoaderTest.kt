@@ -1,5 +1,7 @@
-package com.sapuseven.sneakybot.plugins
+package com.sapuseven.sneakybot.utils
 
+import com.sapuseven.sneakybot.plugins.PluggableCommand
+import com.sapuseven.sneakybot.plugins.PluggableService
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject

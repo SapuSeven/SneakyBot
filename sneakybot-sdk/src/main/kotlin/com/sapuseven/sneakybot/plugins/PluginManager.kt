@@ -6,8 +6,6 @@ import java.io.File
 
 /**
  * The main PluginManager structure.
- *
- * Only as a reference for all available methods.
  */
 interface PluginManager {
 

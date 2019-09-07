@@ -56,9 +56,7 @@ class CommandClients : PluggableCommand {
         this.manager = pluginManager
     }
 
-    private inner class ClientComparator : java.util.Comparator<Client> {
-        override fun compare(c1: Client, c2: Client): Int {
-            return c1.id.compareTo(c2.id)
-        }
+    private inner class ClientComparator : Comparator<Client> {
+        override fun compare(c1: Client, c2: Client): Int = c1.id.compareTo(c2.id)
     }
 }

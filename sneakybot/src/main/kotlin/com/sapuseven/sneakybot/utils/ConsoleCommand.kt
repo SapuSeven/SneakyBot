@@ -20,13 +20,9 @@ class ConsoleCommand(command: String) {
                 this.params.add(param)
     }
 
-    fun getParam(index: Int): String {
-        return params[index]
-    }
+    fun getParam(index: Int): String = params[index]
 
-    fun paramCount(): Int {
-        return params.size
-    }
+    fun paramCount(): Int = params.size
 
     override fun toString(): String {
         val sb = StringBuilder(commandName)

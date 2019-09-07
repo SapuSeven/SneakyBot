@@ -1,4 +1,4 @@
-package com.sapuseven.sneakybot.plugins
+package com.sapuseven.sneakybot.utils
 
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -28,7 +28,8 @@ object PluginLoader {
         }
 
         try {
-            pluginClasses = extractClassesFromJARs(pluginJars, classLoader, pluginClass)
+            pluginClasses =
+                extractClassesFromJARs(pluginJars, classLoader, pluginClass)
         } catch (e: IOException) {
             log.error("IOException while loading plugins: ${e.message}")
             return emptyList()
@@ -93,8 +94,6 @@ object PluginLoader {
     }
 
     private class JARFileFilter : FileFilter {
-        override fun accept(f: File): Boolean {
-            return f.name.toLowerCase().endsWith(".jar")
-        }
+        override fun accept(f: File): Boolean = f.name.toLowerCase().endsWith(".jar")
     }
 }

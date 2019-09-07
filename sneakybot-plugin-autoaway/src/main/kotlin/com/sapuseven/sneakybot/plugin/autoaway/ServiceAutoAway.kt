@@ -34,7 +34,7 @@ class ServiceAutoAway : PluggableService {
         // unused
     }
 
-    override fun onCommandExecuted(c: ConsoleCommand, invokerId: Int) {
+    override fun onCommandExecuted(cmd: ConsoleCommand, invokerId: Int) {
         // unused
     }
 

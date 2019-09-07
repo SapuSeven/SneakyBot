@@ -15,10 +15,10 @@ import com.sapuseven.sneakybot.commands.*
 import com.sapuseven.sneakybot.exceptions.NoSuchClientException
 import com.sapuseven.sneakybot.plugins.PluggableCommand
 import com.sapuseven.sneakybot.plugins.PluggableService
-import com.sapuseven.sneakybot.plugins.PluginLoader
 import com.sapuseven.sneakybot.plugins.Timer
 import com.sapuseven.sneakybot.utils.ConsoleCommand
 import com.sapuseven.sneakybot.utils.EventListenerImplementation
+import com.sapuseven.sneakybot.utils.PluginLoader
 import com.sapuseven.sneakybot.utils.SneakyBotConfig
 import com.xenomachina.argparser.ArgParser
 import com.xenomachina.argparser.mainBody

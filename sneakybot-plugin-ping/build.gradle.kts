@@ -15,7 +15,7 @@ dependencies {
     compileOnly(kotlin("stdlib-jdk8"))
     compileOnly(project(":sneakybot-sdk"))
     compileOnly("org.slf4j:slf4j-simple:1.7.2")
-    testImplementation(project(":sneakybot-sdk"))
+    testImplementation(project(":sneakybot"))
     testImplementation("org.slf4j:slf4j-nop:1.7.2")
     testImplementation("org.junit.jupiter:junit-jupiter:5.5.1")
     testImplementation("io.mockk:mockk:1.9.3")

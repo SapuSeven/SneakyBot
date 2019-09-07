@@ -55,8 +55,6 @@ class CommandChannels : PluggableCommand {
     }
 
     private inner class ChannelComparator : java.util.Comparator<Channel> {
-        override fun compare(c1: Channel, c2: Channel): Int {
-            return c1.id.compareTo(c2.id)
-        }
+        override fun compare(c1: Channel, c2: Channel): Int = c1.id.compareTo(c2.id)
     }
 }
