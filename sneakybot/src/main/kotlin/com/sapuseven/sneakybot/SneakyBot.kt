@@ -432,7 +432,7 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
     }
 
     private fun isCommand(msg: String): Boolean {
-        return msg.startsWith("!")
+        return msg.startsWith("!") && msg.length >= 2
     }
 
     @Throws(NoSuchClientException::class)
@@ -443,7 +443,7 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
         throw NoSuchClientException()
     }
 
-    fun addTimer(timer: Timer, interval: Int) {
+    internal fun addTimer(timer: Timer, interval: Int) {
         timers.add(
             Thread {
                 var running = true

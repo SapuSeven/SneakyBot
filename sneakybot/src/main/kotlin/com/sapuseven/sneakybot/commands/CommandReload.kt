@@ -4,7 +4,6 @@ import com.sapuseven.sneakybot.SneakyBot
 import com.sapuseven.sneakybot.utils.Command
 import com.sapuseven.sneakybot.utils.ConsoleCommand
 import org.slf4j.LoggerFactory
-import kotlin.system.exitProcess
 
 internal class CommandReload(private val bot: SneakyBot) : BuiltinCommand() {
     override val command: Command = Command()
@@ -20,13 +19,8 @@ internal class CommandReload(private val bot: SneakyBot) : BuiltinCommand() {
 
         bot.stopPlugins()
         bot.loadPlugins()
-        try {
-            bot.preInit()
-        } catch (e: Exception) {
-            // TODO: Better error handling without quitting
-            e.printStackTrace()
-            exitProcess(1)
-        }
+
+        bot.preInit()
 
         bot.postInit()
 

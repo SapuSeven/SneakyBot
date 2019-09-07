@@ -1,6 +1,7 @@
 package com.sapuseven.sneakybot.plugins
 
 import com.github.theholywaffle.teamspeak3.TS3Api
+import com.sapuseven.sneakybot.exceptions.NoSuchClientException
 import java.io.File
 
 /**
@@ -42,10 +43,9 @@ interface PluginManager {
      *
      * @param clientId The id of the client to find.
      * @return The clients name.
-     * @throws Exception When the client cannot be found.
+     * @throws NoSuchClientException When the client cannot be found.
      */
-    // TODO: Switch to a more specific exception type
-    @Throws(Exception::class)
+    @Throws(NoSuchClientException::class)
     fun getClientNameById(clientId: Int): String
 
     /**

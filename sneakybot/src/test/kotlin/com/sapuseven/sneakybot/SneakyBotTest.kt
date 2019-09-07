@@ -30,8 +30,8 @@ class SneakyBotTest {
         every { mockedApi.channels } returns listOf(
             Channel(
                 mapOf(
-                    Pair("channel_name", botConfig.consoleName),
-                    Pair("cid", "1")
+                    "channel_name" to botConfig.consoleName,
+                    "cid" to "1"
                 )
             )
         )
@@ -59,8 +59,8 @@ class SneakyBotTest {
         every { mockedApi.channels } returns listOf(
             Channel(
                 mapOf(
-                    Pair("channel_name", botConfig.consoleName),
-                    Pair("cid", "1")
+                    "channel_name" to botConfig.consoleName,
+                    "cid" to "1"
                 )
             )
         )
@@ -113,26 +113,26 @@ class SneakyBotTest {
         every { mockedApi.serverGroups } returns listOf(
             ServerGroup(
                 mapOf(
-                    Pair("name", botConfig.username),
-                    Pair("sgid", "1")
+                    "name" to botConfig.username,
+                    "sgid" to "1"
                 )
             )
         )
         every { mockedApi.clients } returns listOf(
             Client(
                 mapOf(
-                    Pair("client_nickname", "TestUser"),
-                    Pair("client_unique_identifier", "TestUserUniqueIdentifier"),
-                    Pair("clid", "2")
+                    "client_nickname" to "TestUser",
+                    "client_unique_identifier" to "TestUserUniqueIdentifier",
+                    "clid" to "2"
                 )
             )
         )
         every { mockedApi.getServerGroupClients(1) } returns listOf(
             ServerGroupClient(
                 mapOf(
-                    Pair("cldbid", "2"),
-                    Pair("client_nickname", "TestUser"),
-                    Pair("client_unique_identifier", "TestUserUniqueIdentifier")
+                    "cldbid" to "2",
+                    "client_nickname" to "TestUser",
+                    "client_unique_identifier" to "TestUserUniqueIdentifier"
                 )
             )
         )
@@ -157,9 +157,9 @@ class SneakyBotTest {
 
         val client = Client(
             mapOf(
-                Pair("client_nickname", "TestUser"),
-                Pair("client_unique_identifier", "TestUserUniqueIdentifier"),
-                Pair("clid", "2")
+                "client_nickname" to "TestUser",
+                "client_unique_identifier" to "TestUserUniqueIdentifier",
+                "clid" to "2"
             )
         )
 

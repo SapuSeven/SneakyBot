@@ -12,7 +12,6 @@ interface PluggableService {
      *
      * @param pluginManager The [PluginManager] of the main SneakyBOT instance.
      */
-    @Throws(Exception::class)
     fun preInit(pluginManager: PluginManager)
 
     /**
