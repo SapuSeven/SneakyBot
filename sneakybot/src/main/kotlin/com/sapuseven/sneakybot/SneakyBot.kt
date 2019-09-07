@@ -431,9 +431,7 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
             query.api.sendPrivateMessage(userId, msg)
     }
 
-    private fun isCommand(msg: String): Boolean {
-        return msg.startsWith("!") && msg.length >= 2
-    }
+    private fun isCommand(msg: String): Boolean = msg.startsWith("!") && msg.length >= 2
 
     @Throws(NoSuchClientException::class)
     fun getClientById(clientId: Int): Client {
