@@ -5,6 +5,7 @@ class Command {
     val parameters: ArrayList<Parameter> = ArrayList()
     var help: String = ""
 
+    @Suppress("UNUSED_PARAMETER")
     fun addParameter(parameter: String) {
         // This gets implemented by the SneakyBOT client
     }
