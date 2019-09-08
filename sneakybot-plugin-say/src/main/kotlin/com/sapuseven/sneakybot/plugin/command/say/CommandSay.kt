@@ -23,7 +23,7 @@ class CommandSay : PluggableCommand {
         return manager.api?.let { api ->
             val whoAmI = api.whoAmI()
             if (cmd.paramCount() == 3) {
-                if (cmd.getParam(2).replace("\\w".toRegex(), "").length >= 3) {
+                if (cmd.getParam(2).replace("\\s".toRegex(), "").length >= 3) {
                     api.setNickname(cmd.getParam(2))
                     api.sendServerMessage(cmd.getParam(1))
                     api.setNickname(whoAmI.nickname)
