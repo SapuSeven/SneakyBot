@@ -69,7 +69,6 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
     fun run() {
         loadBuiltinCommands()
 
-        log.info("Initializing plugins (Phase 1)...")
         loadPlugins()
         preInit()
 
@@ -99,7 +98,6 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
         log.debug("Registering all event listeners...")
         query.api.registerAllEvents()
 
-        log.info("Initializing plugins (Phase 2)...")
         postInit()
 
         log.info("Startup done.")
@@ -119,6 +117,8 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
      * If so, switch to direct mode.
      */
     private fun lookForDirectClients() {
+        log.info("Looking for existing direct clients...")
+
         for (serverGroupClient in query.api.getServerGroupClients(serverGroupId)) {
             if (serverGroupClient.nickname != botConfig.username) {
                 for (onlineClient in query.api.clients) {
@@ -233,6 +233,8 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
     }
 
     internal fun preInit() {
+        log.info("Initializing plugins (Phase 1)...")
+
         for (p in services) {
             p.setPluginManager(manager)
             log.debug("PreInit: " + p.javaClass.simpleName)
@@ -241,6 +243,8 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
     }
 
     internal fun postInit() {
+        log.info("Initializing plugins (Phase 2)...")
+
         for (p in services) {
             log.debug("PostInit: " + p.javaClass.simpleName)
             p.postInit(manager)
@@ -263,6 +267,8 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
     }
 
     internal fun loadPlugins() {
+        log.info("Loading plugins...")
+
         val pluginDir = File(botConfig.pluginDir)
         if (!pluginDir.exists()) {
             log.warn("Plugin directory not found!")
@@ -386,7 +392,6 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
             log.info("Server group found.")
         }
 
-        log.info("Server group discovery complete.")
         return serverGroupId
     }
 
@@ -394,7 +399,7 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
         log.info("Stopping plugins...")
         stopPlugins()
 
-        if (::query.isInitialized) {
+        if (::query.isInitialized && query.isConnected) {
             if (mode == MODE_DIRECT)
                 sendDirectMessage("SneakyBOT is now offline.")
             else
