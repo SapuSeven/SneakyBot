@@ -1,7 +1,7 @@
 package com.sapuseven.sneakybot.utils
 
 class Command {
-    var commandName: String? = null
+    lateinit var commandName: String
     val parameters: ArrayList<Parameter> = ArrayList()
     var help: String = "(No help text found.)"
 

@@ -7,8 +7,9 @@ class CommandTest {
     @Test
     fun defaultConstructor() {
         val command = Command()
+        command.commandName = "test"
 
-        Assertions.assertNull(command.commandName)
+        Assertions.assertEquals("test", command.commandName)
         Assertions.assertEquals(0, command.parameters.size)
         Assertions.assertNotNull(command.help)
     }

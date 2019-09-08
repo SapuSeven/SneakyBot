@@ -1,7 +1,4 @@
-@file:Suppress("UNUSED_PARAMETER")
 package com.sapuseven.sneakybot.utils
-
-import java.util.*
 
 class Command {
     lateinit var commandName: String
