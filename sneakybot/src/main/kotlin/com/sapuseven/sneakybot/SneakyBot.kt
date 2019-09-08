@@ -34,7 +34,16 @@ fun main(args: Array<String>) = mainBody {
         org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY,
         if (botConfig.debug) "DEBUG" else "INFO"
     ) // TODO: Allow the user to specify any log level
-    SneakyBot(botConfig).run()
+
+    val bot = SneakyBot(botConfig)
+
+    Runtime.getRuntime().addShutdownHook(object : Thread() {
+        override fun run() {
+            bot.quit()
+        }
+    })
+
+    bot.run()
 }
 
 class SneakyBot(internal val botConfig: SneakyBotConfig) {
@@ -391,7 +400,6 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
             sendChannelMessage("SneakyBOT is now offline.")
 
         query.exit()
-        exitProcess(0)
     }
 
     internal fun createConsoleChannel(): Int {
