@@ -99,10 +99,9 @@ class ServiceLock : PluggableService {
     }
 
     private fun refreshListWithClient(clientNickname: String, clientId: Int) {
-        for (lockedClient in lockedClients) {
+        for (lockedClient in lockedClients)
             if (lockedClient.clientName == clientNickname)
                 lockedClient.clientId = clientId
-        }
     }
 
     private fun lockClient(clientId: Int, channelId: Int, invokerId: Int? = null): Boolean {
