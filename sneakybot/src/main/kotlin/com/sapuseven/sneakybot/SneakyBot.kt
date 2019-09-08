@@ -394,12 +394,14 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
         log.info("Stopping plugins...")
         stopPlugins()
 
-        if (mode == MODE_DIRECT)
-            sendDirectMessage("SneakyBOT is now offline.")
-        else
-            sendChannelMessage("SneakyBOT is now offline.")
+        if (::query.isInitialized) {
+            if (mode == MODE_DIRECT)
+                sendDirectMessage("SneakyBOT is now offline.")
+            else
+                sendChannelMessage("SneakyBOT is now offline.")
 
-        query.exit()
+            query.exit()
+        }
     }
 
     internal fun createConsoleChannel(): Int {
