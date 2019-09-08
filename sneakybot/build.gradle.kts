@@ -5,6 +5,7 @@ version = "1.0"
 
 plugins {
     kotlin("jvm") version "1.3.41"
+    application
 }
 
 repositories {
@@ -32,17 +33,6 @@ tasks.named<Test>("test") {
     }
 }
 
-val fatJar = task("fatJar", type = Jar::class) {
-    baseName = "${project.name}-fat"
-    manifest {
-        attributes["Main-Class"] = "com.sapuseven.sneakybot.SneakyBot" + "Kt"
-    }
-    from(configurations.runtimeClasspath.map { if (it.isDirectory) it else zipTree(it) })
-    with(tasks["jar"] as CopySpec)
-}
-
-tasks {
-    "build" {
-        dependsOn(fatJar)
-    }
+application {
+    mainClassName = "com.sapuseven.sneakybot.SneakyBot" + "Kt"
 }
