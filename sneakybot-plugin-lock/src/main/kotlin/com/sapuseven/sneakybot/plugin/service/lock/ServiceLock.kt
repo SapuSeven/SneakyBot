@@ -45,7 +45,7 @@ class ServiceLock : PluggableService {
     override fun onCommandExecuted(cmd: ConsoleCommand, invokerId: Int) {
         when (cmd.getParam(0)) {
             "lock" -> {
-                if (cmd.paramCount() != 3) sendHelpMessage("lock", invokerId)
+                if (cmd.paramCount() != 3) return sendHelpMessage("lock", invokerId)
 
                 val targetUserId = cmd.getParam(1).toIntOrNull() ?: return sendHelpMessage("lock", invokerId)
                 val targetChannelId = cmd.getParam(2).toIntOrNull() ?: return sendHelpMessage("lock", invokerId)
