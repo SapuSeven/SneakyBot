@@ -22,6 +22,7 @@ class SneakyBotConfig(parser: ArgParser) {
                 throw InvalidArgumentException("Invalid port (valid range: 1-65535)")
         }
 
+    // TODO: Add option to use different login- and nicknames
     val username: String by parser.storing(
         "-u",
         "--user",

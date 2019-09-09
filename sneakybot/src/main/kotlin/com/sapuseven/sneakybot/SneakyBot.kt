@@ -64,9 +64,14 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
     companion object {
         const val MODE_DIRECT = 0x0001
         const val MODE_CHANNEL = 0x0002
+
+        const val EXIT_CODE_COMMAND_ERROR = 1
+        const val EXIT_CODE_CONNECTION_ERROR = 2
     }
 
     fun run() {
+        manager = PluginManagerImpl(this)
+
         loadBuiltinCommands()
 
         loadPlugins()
@@ -76,10 +81,10 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
             query = connect(generateConfig())
         } catch (e: TS3ConnectionFailedException) {
             log.error("Connection failed: ${e.message}")
-            exitProcess(1)
+            exitProcess(EXIT_CODE_CONNECTION_ERROR)
         } catch (e: TS3CommandFailedException) {
             logCommandFailed(e, "Login failed")
-            exitProcess(1)
+            exitProcess(EXIT_CODE_COMMAND_ERROR)
         }
 
         consoleChannelId = getConsoleChannel() ?: createConsoleChannel()
@@ -279,7 +284,6 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
         commands.addAll(PluginLoader.loadPlugins(pluginDir, PluggableCommand::class.java))
         services.clear()
         services.addAll(PluginLoader.loadPlugins(pluginDir, PluggableService::class.java))
-        manager = PluginManagerImpl(this)
 
         for (p in commands)
             p.setPluginManager(manager)
