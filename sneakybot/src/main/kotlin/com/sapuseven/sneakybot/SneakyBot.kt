@@ -22,6 +22,7 @@ import com.sapuseven.sneakybot.utils.PluginLoader
 import com.sapuseven.sneakybot.utils.SneakyBotConfig
 import com.xenomachina.argparser.ArgParser
 import com.xenomachina.argparser.mainBody
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.util.*
@@ -59,7 +60,6 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
     internal val services = ArrayList<PluggableService>()
     lateinit var manager: PluginManagerImpl
 
-    private val log = LoggerFactory.getLogger(SneakyBot::class.java)
 
     companion object {
         const val MODE_DIRECT = 0x0001
@@ -67,6 +67,8 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
 
         const val EXIT_CODE_COMMAND_ERROR = 1
         const val EXIT_CODE_CONNECTION_ERROR = 2
+
+        val log: Logger = LoggerFactory.getLogger(SneakyBot::class.java)
     }
 
     fun run() {
@@ -165,11 +167,8 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
             log.info("User #${event.invokerId} (${event.invokerName}) executed a command via CONSOLE chat: " + event.message)
             interpretCommand(event.message, event.invokerId)
         } else {
-            log.info("User #${event.invokerId} (${event.invokerName}) tried to execute a command, but didn't use CONSOLE chat: " + event.message)
-            query.api.sendPrivateMessage(
-                event.invokerId,
-                "Please use the ${botConfig.consoleName} channel to communicate with me."
-            )
+            log.info("User #${event.invokerId} (${event.invokerName}) tried to execute a command, but didn't use DIRECT chat: " + event.message)
+            sendChannelMessage("Please use the direct chat to communicate with me.")
         }
     }
 
@@ -186,8 +185,11 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
                 )
             }
         } else {
-            log.info("User #${event.invokerId} (${event.invokerName}) tried to execute a command, but didn't use DIRECT chat: " + event.message)
-            sendChannelMessage("Please use the direct chat to communicate with me.")
+            log.info("User #${event.invokerId} (${event.invokerName}) tried to execute a command, but didn't use CONSOLE chat: " + event.message)
+            query.api.sendPrivateMessage(
+                event.invokerId,
+                "Please use the ${botConfig.consoleName} channel to communicate with me."
+            )
         }
     }
 
@@ -268,7 +270,6 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
         builtinCommands.add(CommandDirects(this))
         builtinCommands.add(CommandReload(this))
         builtinCommands.add(CommandHelp(this))
-        // TODO: Add builtin commands
     }
 
     internal fun loadPlugins() {
@@ -443,6 +444,7 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
     }
 
     internal fun sendDirectMessage(msg: String) {
+        // TODO: This will throw an exception if the direct client is gone. Remove any client that leaves the server and fall back to channel mode if no more direct clients exist.
         for (userId in directClients)
             query.api.sendPrivateMessage(userId, msg)
     }
