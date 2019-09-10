@@ -26,6 +26,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.util.*
+import kotlin.collections.ArrayList
 import kotlin.collections.set
 import kotlin.system.exitProcess
 
@@ -40,11 +41,20 @@ fun main(args: Array<String>) = mainBody {
 
     Runtime.getRuntime().addShutdownHook(object : Thread() {
         override fun run() {
-            bot.quit()
+            try {
+                bot.quit()
+            } catch (e: TS3CommandFailedException) {
+                bot.logCommandFailed(e, "Exception on shutdown")
+            }
         }
     })
 
-    bot.run()
+    try {
+        // TODO: This doesn't catch all exceptions yet
+        bot.run()
+    } catch (e: TS3CommandFailedException) {
+        bot.logCommandFailed(e, "Exception during runtime")
+    }
 }
 
 class SneakyBot(internal val botConfig: SneakyBotConfig) {
@@ -202,7 +212,7 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
         return config
     }
 
-    private fun logCommandFailed(e: TS3CommandFailedException, msg: String = "") {
+    internal fun logCommandFailed(e: TS3CommandFailedException, msg: String = "") {
         e.message?.let { message ->
             if (message.indexOf('\n') != -1) {
                 if (msg.isNotBlank())

@@ -25,6 +25,7 @@ class EventListenerImplementation(private val bot: SneakyBot) : TS3Listener {
     }
 
     override fun onClientJoin(e: ClientJoinEvent) {
+        // TODO: Check if in SneakyBOT server group; if yes, add to directs
         sendEventToServices(e)
     }
 
