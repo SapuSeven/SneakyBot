@@ -66,7 +66,7 @@ class EventListenerImplementation(private val bot: SneakyBot) : TS3Listener {
     }
 
     private fun sendEventToServices(e: BaseEvent) {
-        for (p in bot.services)
+        for (p in bot.services + bot.builtinServices)
             p.onEventReceived(e)
     }
 }

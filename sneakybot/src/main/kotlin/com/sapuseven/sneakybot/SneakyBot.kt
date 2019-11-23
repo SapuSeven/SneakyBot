@@ -67,6 +67,7 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
     private val timers = ArrayList<Thread>()
     internal val builtinCommands = ArrayList<PluggableCommand>()
     internal val commands = ArrayList<PluggableCommand>()
+    internal val builtinServices = ArrayList<PluggableService>()
     internal val services = ArrayList<PluggableService>()
     lateinit var manager: PluginManagerImpl
 
@@ -237,7 +238,7 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
     private fun interpretCommand(command: String, invokerId: Int) {
         val cmd = ConsoleCommand(command)
 
-        for (p in services)
+        for (p in services + builtinServices)
             p.onCommandExecuted(cmd, invokerId)
 
         val pluggableCommand = getCommandByName(cmd.commandName)
@@ -252,7 +253,7 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
     internal fun preInit() {
         log.info("Initializing plugins (Phase 1)...")
 
-        for (p in services) {
+        for (p in services + builtinServices) {
             p.setPluginManager(manager)
             log.debug("PreInit: " + p.javaClass.simpleName)
             p.preInit(manager)
@@ -262,7 +263,7 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
     internal fun postInit() {
         log.info("Initializing plugins (Phase 2)...")
 
-        for (p in services) {
+        for (p in services + builtinServices) {
             log.debug("PostInit: " + p.javaClass.simpleName)
             p.postInit(manager)
         }
@@ -271,6 +272,10 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
             if (!t.isAlive)
                 t.start()
         }
+    }
+
+    private fun loadBuiltinServices() {
+        builtinServices.clear()
     }
 
     private fun loadBuiltinCommands() {
@@ -301,7 +306,7 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
     }
 
     internal fun stopPlugins() {
-        for (p in services) {
+        for (p in services + builtinServices) {
             log.debug("Stopping: " + p.javaClass.simpleName)
             p.stop(manager)
         }
