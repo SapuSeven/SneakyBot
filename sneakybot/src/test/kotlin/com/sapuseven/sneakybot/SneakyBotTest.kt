@@ -3,11 +3,15 @@ package com.sapuseven.sneakybot
 import com.github.theholywaffle.teamspeak3.TS3Api
 import com.github.theholywaffle.teamspeak3.TS3Query
 import com.github.theholywaffle.teamspeak3.api.TextMessageTargetMode
+import com.github.theholywaffle.teamspeak3.api.event.ClientMovedEvent
 import com.github.theholywaffle.teamspeak3.api.event.TextMessageEvent
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException
-import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException
 import com.github.theholywaffle.teamspeak3.api.wrapper.*
 import com.sapuseven.sneakybot.exceptions.NoSuchClientException
+import com.sapuseven.sneakybot.plugins.PluggableCommand
+import com.sapuseven.sneakybot.plugins.PluginManager
+import com.sapuseven.sneakybot.utils.Command
+import com.sapuseven.sneakybot.utils.ConsoleCommand
 import com.sapuseven.sneakybot.utils.EventListenerImplementation
 import com.sapuseven.sneakybot.utils.SneakyBotConfig
 import com.xenomachina.argparser.ArgParser
@@ -15,9 +19,8 @@ import io.mockk.*
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import org.slf4j.LoggerFactory
+import org.slf4j.Logger
 import java.io.File
-import java.net.UnknownHostException
 
 class SneakyBotTest {
     companion object {
@@ -150,6 +153,24 @@ class SneakyBotTest {
     }
 
     @Test
+    fun loadPlugins() {
+        val args = VIRTUAL_SERVER_ARGS_DEFAULT.split(" ").toTypedArray()
+        val botConfig = ArgParser(args).parseInto(::SneakyBotConfig)
+
+        val mockedBot = spyk(SneakyBot(botConfig))
+        val mockedApi = mockk<TS3Api>(relaxed = true)
+
+        mockkConstructor(File::class)
+        //every { anyConstructed<File>().exists() } returns true
+
+        mockedBot.query = mockk {
+            every { api } returns mockedApi
+        }
+
+        mockedBot.run()
+    }
+
+    @Test
     fun getClientById() {
         val args = VIRTUAL_SERVER_ARGS_DEFAULT.split(" ").toTypedArray()
         val botConfig = ArgParser(args).parseInto(::SneakyBotConfig)
@@ -193,10 +214,34 @@ class SneakyBotTest {
         mockedBot.run()
         mockedApi.addTS3Listeners(eventListener)
 
-        eventListener.onTextMessage(createTextMessageEvent(TextMessageTargetMode.CHANNEL, "test", VIRTUAL_SERVER_TEST_USER_ID))
-        eventListener.onTextMessage(createTextMessageEvent(TextMessageTargetMode.CHANNEL, "!", VIRTUAL_SERVER_TEST_USER_ID))
-        eventListener.onTextMessage(createTextMessageEvent(TextMessageTargetMode.CHANNEL, "!abc", VIRTUAL_SERVER_BOT_USER_ID))
-        eventListener.onTextMessage(createTextMessageEvent(TextMessageTargetMode.SERVER, "!abc", VIRTUAL_SERVER_TEST_USER_ID))
+        eventListener.onTextMessage(
+            createTextMessageEvent(
+                TextMessageTargetMode.CHANNEL,
+                "test",
+                VIRTUAL_SERVER_TEST_USER_ID
+            )
+        )
+        eventListener.onTextMessage(
+            createTextMessageEvent(
+                TextMessageTargetMode.CHANNEL,
+                "!",
+                VIRTUAL_SERVER_TEST_USER_ID
+            )
+        )
+        eventListener.onTextMessage(
+            createTextMessageEvent(
+                TextMessageTargetMode.CHANNEL,
+                "!abc",
+                VIRTUAL_SERVER_BOT_USER_ID
+            )
+        )
+        eventListener.onTextMessage(
+            createTextMessageEvent(
+                TextMessageTargetMode.SERVER,
+                "!abc",
+                VIRTUAL_SERVER_TEST_USER_ID
+            )
+        )
 
         verify(exactly = 0) { mockedBot["interpretChannelMessage"](any<TextMessageEvent>()) }
         verify(exactly = 0) { mockedBot["interpretDirectMessage"](any<TextMessageEvent>()) }
@@ -224,7 +269,13 @@ class SneakyBotTest {
         mockedBot.run()
         mockedApi.addTS3Listeners(eventListener)
 
-        eventListener.onTextMessage(createTextMessageEvent(TextMessageTargetMode.CHANNEL, "!test", VIRTUAL_SERVER_TEST_USER_ID))
+        eventListener.onTextMessage(
+            createTextMessageEvent(
+                TextMessageTargetMode.CHANNEL,
+                "!test",
+                VIRTUAL_SERVER_TEST_USER_ID
+            )
+        )
 
         verify(exactly = 1) { mockedBot["interpretCommand"](any<String>(), any<Int>()) }
         verify(exactly = 1) { mockedBot["interpretChannelMessage"](any<TextMessageEvent>()) }
@@ -262,22 +313,197 @@ class SneakyBotTest {
         mockedBot.run()
         mockedApi.addTS3Listeners(eventListener)
 
-        eventListener.onTextMessage(createTextMessageEvent(TextMessageTargetMode.CHANNEL, "!test", VIRTUAL_SERVER_TEST_USER_ID))
+        eventListener.onTextMessage(
+            createTextMessageEvent(
+                TextMessageTargetMode.CHANNEL,
+                "!test",
+                VIRTUAL_SERVER_TEST_USER_ID
+            )
+        )
 
         verify(exactly = 0) { mockedBot["interpretCommand"](any<String>(), any<Int>()) }
         verify(exactly = 1) { mockedBot["interpretChannelMessage"](any<TextMessageEvent>()) }
         verify(exactly = 0) { mockedBot["interpretDirectMessage"](any<TextMessageEvent>()) }
     }
 
-    private fun createTextMessageEvent(targetmode: TextMessageTargetMode, text: String, invokerid: String) = TextMessageEvent(
+    @Test
+    fun interpretDirectMessage_channelMode() {
+        val args = VIRTUAL_SERVER_ARGS_DEFAULT.split(" ").toTypedArray()
+        val botConfig = ArgParser(args).parseInto(::SneakyBotConfig)
+
+        val mockedApi = mockk<TS3Api>(relaxed = true)
+        val mockedBot = spyk(SneakyBot(botConfig), recordPrivateCalls = true)
+        val eventListener = EventListenerImplementation(mockedBot)
+
+        every { mockedApi.whoAmI() } returns createBotMock()
+        every { mockedApi.channels } returns listOf(
+            createChannelConsole(botConfig)
+        )
+
+        mockkConstructor(TS3Query::class)
+
+        every { anyConstructed<TS3Query>().connect() } just Runs
+        every { anyConstructed<TS3Query>().api } returns mockedApi
+
+        mockedBot.run()
+        mockedApi.addTS3Listeners(eventListener)
+
+        eventListener.onTextMessage(
+            createTextMessageEvent(
+                TextMessageTargetMode.CLIENT,
+                "!test",
+                VIRTUAL_SERVER_TEST_USER_ID
+            )
+        )
+
+        verify(exactly = 0) { mockedBot["interpretCommand"](any<String>(), any<Int>()) }
+        verify(exactly = 0) { mockedBot["interpretChannelMessage"](any<TextMessageEvent>()) }
+        verify(exactly = 1) { mockedBot["interpretDirectMessage"](any<TextMessageEvent>()) }
+    }
+
+    @Test
+    fun interpretDirectMessage_directMode() {
+        val args = VIRTUAL_SERVER_ARGS_DEFAULT.split(" ").toTypedArray()
+        val botConfig = ArgParser(args).parseInto(::SneakyBotConfig)
+
+        val mockedApi = mockk<TS3Api>(relaxed = true)
+        val mockedBot = spyk(SneakyBot(botConfig), recordPrivateCalls = true)
+        val eventListener = EventListenerImplementation(mockedBot)
+
+        every { mockedApi.whoAmI() } returns createBotMock()
+        every { mockedApi.channels } returns listOf(
+            createChannelConsole(botConfig)
+        )
+        every { mockedApi.serverGroups } returns listOf(
+            createServerGroupSneakyBot(botConfig)
+        )
+        every { mockedApi.clients } returns listOf(
+            createClient()
+        )
+        every { mockedApi.getServerGroupClients(VIRTUAL_SERVER_GROUP_ID.toInt()) } returns listOf(
+            createServerGroupClient()
+        )
+
+        mockkConstructor(TS3Query::class)
+
+        every { anyConstructed<TS3Query>().connect() } just Runs
+        every { anyConstructed<TS3Query>().api } returns mockedApi
+
+        mockedBot.run()
+        mockedApi.addTS3Listeners(eventListener)
+
+        eventListener.onTextMessage(
+            createTextMessageEvent(
+                TextMessageTargetMode.CLIENT,
+                "!test",
+                VIRTUAL_SERVER_TEST_USER_ID
+            )
+        )
+
+        verify(exactly = 1) { mockedBot["interpretCommand"](any<String>(), any<Int>()) }
+        verify(exactly = 1) { mockedBot["interpretDirectMessage"](any<TextMessageEvent>()) }
+
+        eventListener.onTextMessage(
+            createTextMessageEvent(
+                TextMessageTargetMode.CLIENT,
+                "!test",
+                VIRTUAL_SERVER_INVALID_USER_ID
+            )
+        )
+
+        verify(exactly = 1) { mockedBot["interpretCommand"](any<String>(), any<Int>()) }
+        verify(exactly = 2) { mockedBot["interpretDirectMessage"](any<TextMessageEvent>()) }
+        verify(exactly = 0) { mockedBot["interpretChannelMessage"](any<TextMessageEvent>()) }
+    }
+
+    @Test
+    fun interpretClientMoved_movedToConsole() {
+        val args = VIRTUAL_SERVER_ARGS_DEFAULT.split(" ").toTypedArray()
+        val botConfig = ArgParser(args).parseInto(::SneakyBotConfig)
+
+        val mockedApi = mockk<TS3Api>(relaxed = true)
+        val mockedBot = spyk(SneakyBot(botConfig))
+        val eventListener = EventListenerImplementation(mockedBot)
+
+        every { mockedApi.whoAmI() } returns createBotMock()
+        every { mockedApi.channels } returns listOf(
+            createChannelConsole(botConfig)
+        )
+
+        mockkConstructor(TS3Query::class)
+
+        every { anyConstructed<TS3Query>().connect() } just Runs
+        every { anyConstructed<TS3Query>().api } returns mockedApi
+
+        mockedBot.run()
+
+        mockedApi.addTS3Listeners(eventListener)
+
+        eventListener.onClientMoved(
+            createClientMovedEvent(
+                VIRTUAL_SERVER_CHANNEL_CONSOLE_ID,
+                VIRTUAL_SERVER_TEST_USER_ID
+            )
+        )
+
+        verify { mockedApi.sendChannelMessage(any()) }
+    }
+
+    @Test
+    fun interpretCommand_commandExecutedWithErrors() {
+        val args = VIRTUAL_SERVER_ARGS_DEFAULT.split(" ").toTypedArray()
+        val botConfig = ArgParser(args).parseInto(::SneakyBotConfig)
+
+        val mockedApi = mockk<TS3Api>(relaxed = true)
+        val mockedBot = spyk(SneakyBot(botConfig), recordPrivateCalls = true)
+        val eventListener = EventListenerImplementation(mockedBot)
+
+        every { mockedApi.whoAmI() } returns createBotMock()
+        every { mockedApi.channels } returns listOf(
+            createChannelConsole(botConfig)
+        )
+
+        every { mockedBot.getCommandByName(any()) } returns mockk {
+            every { execute(any(), any()) } returns false
+        }
+
+        mockkConstructor(TS3Query::class)
+
+        every { anyConstructed<TS3Query>().connect() } just Runs
+        every { anyConstructed<TS3Query>().api } returns mockedApi
+
+        mockedBot.run()
+        mockedApi.addTS3Listeners(eventListener)
+
+        eventListener.onTextMessage(
+            createTextMessageEvent(
+                TextMessageTargetMode.CHANNEL,
+                "!test",
+                VIRTUAL_SERVER_TEST_USER_ID
+            )
+        )
+
+        verify(exactly = 1) { mockedBot["interpretCommand"](any<String>(), any<Int>()) }
+        // TODO: Check for log.info
+    }
+
+    private fun createClientMovedEvent(targetChannelId: String, clientId: String) = ClientMovedEvent(
         mapOf(
-            "targetmode" to targetmode.index.toString(),
-            "msg" to text,
-            "invokerid" to invokerid
-            //"invokername"
-            //"invokeruid"
+            "ctid" to targetChannelId,
+            "clid" to clientId
         )
     )
+
+    private fun createTextMessageEvent(targetMode: TextMessageTargetMode, text: String, invokerId: String) =
+        TextMessageEvent(
+            mapOf(
+                "targetmode" to targetMode.index.toString(),
+                "msg" to text,
+                "invokerid" to invokerId
+                //"invokername"
+                //"invokeruid"
+            )
+        )
 
     private fun createBotMock(): ServerQueryInfo = mockk {
         every { nickname } returns VIRTUAL_SERVER_BOT_USER_NICKNAME
