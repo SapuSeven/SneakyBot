@@ -5,8 +5,6 @@ import com.sapuseven.sneakybot.SneakyBot
 
 class EventListenerImplementation(private val bot: SneakyBot) : TS3Listener {
     override fun onTextMessage(e: TextMessageEvent) {
-        bot.interpretTextMessage(e)
-
         sendEventToServices(e)
     }
 
@@ -15,8 +13,6 @@ class EventListenerImplementation(private val bot: SneakyBot) : TS3Listener {
     }
 
     override fun onClientMoved(e: ClientMovedEvent) {
-        bot.interpretClientMoved(e)
-
         sendEventToServices(e)
     }
 
@@ -25,13 +21,10 @@ class EventListenerImplementation(private val bot: SneakyBot) : TS3Listener {
     }
 
     override fun onClientJoin(e: ClientJoinEvent) {
-        // TODO: Check if in SneakyBOT server group; if yes, add to directs
         sendEventToServices(e)
     }
 
     override fun onChannelEdit(e: ChannelEditedEvent) {
-        if (e.channelId == bot.consoleChannelId)
-            findNewConsoleChannel()
         sendEventToServices(e)
     }
 
@@ -44,8 +37,6 @@ class EventListenerImplementation(private val bot: SneakyBot) : TS3Listener {
     }
 
     override fun onChannelDeleted(e: ChannelDeletedEvent) {
-        if (e.channelId == bot.consoleChannelId)
-            findNewConsoleChannel()
         sendEventToServices(e)
     }
 
@@ -59,10 +50,6 @@ class EventListenerImplementation(private val bot: SneakyBot) : TS3Listener {
 
     override fun onPrivilegeKeyUsed(e: PrivilegeKeyUsedEvent) {
         sendEventToServices(e)
-    }
-
-    private fun findNewConsoleChannel() {
-        bot.consoleChannelId = bot.getConsoleChannel() ?: bot.createConsoleChannel()
     }
 
     private fun sendEventToServices(e: BaseEvent) {

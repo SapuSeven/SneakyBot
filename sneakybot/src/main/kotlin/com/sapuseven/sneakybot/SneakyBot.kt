@@ -2,11 +2,7 @@ package com.sapuseven.sneakybot
 
 import com.github.theholywaffle.teamspeak3.TS3Config
 import com.github.theholywaffle.teamspeak3.TS3Query
-import com.github.theholywaffle.teamspeak3.api.ChannelProperty
 import com.github.theholywaffle.teamspeak3.api.PermissionGroupDatabaseType
-import com.github.theholywaffle.teamspeak3.api.TextMessageTargetMode
-import com.github.theholywaffle.teamspeak3.api.event.ClientMovedEvent
-import com.github.theholywaffle.teamspeak3.api.event.TextMessageEvent
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException
 import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException
 import com.github.theholywaffle.teamspeak3.api.wrapper.Client
@@ -16,6 +12,8 @@ import com.sapuseven.sneakybot.exceptions.NoSuchClientException
 import com.sapuseven.sneakybot.plugins.PluggableCommand
 import com.sapuseven.sneakybot.plugins.PluggableService
 import com.sapuseven.sneakybot.plugins.Timer
+import com.sapuseven.sneakybot.services.ServiceChannelMode
+import com.sapuseven.sneakybot.services.ServiceDirectMode
 import com.sapuseven.sneakybot.utils.ConsoleCommand
 import com.sapuseven.sneakybot.utils.EventListenerImplementation
 import com.sapuseven.sneakybot.utils.PluginLoader
@@ -25,9 +23,7 @@ import com.xenomachina.argparser.mainBody
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
-import java.util.*
 import kotlin.collections.ArrayList
-import kotlin.collections.set
 import kotlin.system.exitProcess
 
 fun main(args: Array<String>) = mainBody {
@@ -60,17 +56,17 @@ fun main(args: Array<String>) = mainBody {
 class SneakyBot(internal val botConfig: SneakyBotConfig) {
     internal lateinit var query: TS3Query
     internal var mode: Int = MODE_CHANNEL
-    private lateinit var whoAmI: ServerQueryInfo
-    internal var consoleChannelId: Int = -1
+    internal lateinit var whoAmI: ServerQueryInfo
     internal var serverGroupId: Int = -1
     internal val directClients = ArrayList<Int>()
-    private val timers = ArrayList<Thread>()
+
     internal val builtinCommands = ArrayList<PluggableCommand>()
     internal val commands = ArrayList<PluggableCommand>()
     internal val builtinServices = ArrayList<PluggableService>()
     internal val services = ArrayList<PluggableService>()
-    lateinit var manager: PluginManagerImpl
 
+    private val timers = ArrayList<Thread>()
+    lateinit var manager: PluginManagerImpl
 
     companion object {
         const val MODE_DIRECT = 0x0001
@@ -85,6 +81,7 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
     fun run() {
         manager = PluginManagerImpl(this)
 
+        loadBuiltinServices()
         loadBuiltinCommands()
 
         loadPlugins()
@@ -100,23 +97,15 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
             exitProcess(EXIT_CODE_COMMAND_ERROR)
         }
 
-        consoleChannelId = getConsoleChannel() ?: createConsoleChannel()
-
         val whoAmI = query.api.whoAmI()
         log.debug("My client id is ${whoAmI.id}.")
-        if (whoAmI.channelId != consoleChannelId) {
-            log.debug("I am now moving to the console channel.")
-            query.api.moveQuery(consoleChannelId)
-        }
 
         serverGroupId = discoverServerGroup()
 
-        lookForDirectClients()
+        postInit()
 
         log.debug("Registering all event listeners...")
         query.api.registerAllEvents()
-
-        postInit()
 
         log.info("Startup done.")
         log.debug(
@@ -128,80 +117,6 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
             sendDirectMessage("SneakyBOT is now online. Please use the direct chat for commands.")
 
         query.api.addTS3Listeners(EventListenerImplementation(this))
-    }
-
-    /**
-     * Looks for clients in the SneakyBOT server group.
-     * If so, switch to direct mode.
-     */
-    private fun lookForDirectClients() {
-        log.info("Looking for existing direct clients...")
-
-        for (serverGroupClient in query.api.getServerGroupClients(serverGroupId)) {
-            if (serverGroupClient.nickname != botConfig.username) {
-                for (onlineClient in query.api.clients) {
-                    if (onlineClient.nickname != botConfig.username && onlineClient.uniqueIdentifier == serverGroupClient.uniqueIdentifier) {
-                        directClients.add(onlineClient.id)
-                        mode = MODE_DIRECT
-                    }
-                }
-            }
-        }
-    }
-
-    internal fun interpretClientMoved(event: ClientMovedEvent) {
-        if (event.targetChannelId == consoleChannelId) {
-            val name = query.api.getClientInfo(event.clientId).nickname
-            log.info("User $name entered the Console channel.")
-            if (mode == MODE_CHANNEL)
-                manager.sendMessage(
-                    "\nWelcome, " + name + ", to the SneakyBOT Console!\n" +
-                            "If you are new, '!help' is usually a good command for getting started.", event.clientId
-                )
-        }
-    }
-
-    internal fun interpretTextMessage(event: TextMessageEvent) {
-        if (event.invokerId == whoAmI.id || !isCommand(event.message)) return
-
-        when (event.targetMode) {
-            TextMessageTargetMode.CHANNEL -> interpretChannelMessage(event)
-            TextMessageTargetMode.CLIENT -> interpretDirectMessage(event)
-            else -> {
-                // ignore
-            }
-        }
-    }
-
-    private fun interpretChannelMessage(event: TextMessageEvent) {
-        if (mode == MODE_CHANNEL) {
-            log.info("User #${event.invokerId} (${event.invokerName}) executed a command via CONSOLE chat: " + event.message)
-            interpretCommand(event.message, event.invokerId)
-        } else {
-            log.info("User #${event.invokerId} (${event.invokerName}) tried to execute a command, but didn't use DIRECT chat: " + event.message)
-            sendChannelMessage("Please use the direct chat to communicate with me.")
-        }
-    }
-
-    private fun interpretDirectMessage(event: TextMessageEvent) {
-        if (mode == MODE_DIRECT) {
-            if (directClients.contains(event.invokerId)) {
-                log.info("User #${event.invokerId} (${event.invokerName}) executed a command via DIRECT chat: ${event.message}")
-                interpretCommand(event.message, event.invokerId)
-            } else {
-                log.info("User #${event.invokerId} (${event.invokerName}) tried to execute a command, but has no permissions to use DIRECT chat: " + event.message)
-                query.api.sendPrivateMessage(
-                    event.invokerId,
-                    "You are not allowed to give me commands!"
-                )
-            }
-        } else {
-            log.info("User #${event.invokerId} (${event.invokerName}) tried to execute a command, but didn't use CONSOLE chat: " + event.message)
-            query.api.sendPrivateMessage(
-                event.invokerId,
-                "Please use the ${botConfig.consoleName} channel to communicate with me."
-            )
-        }
     }
 
     private fun generateConfig(): TS3Config {
@@ -235,7 +150,7 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
         }
     }
 
-    private fun interpretCommand(command: String, invokerId: Int) {
+    internal fun interpretCommand(command: String, invokerId: Int) {
         val cmd = ConsoleCommand(command)
 
         for (p in services + builtinServices)
@@ -276,6 +191,8 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
 
     private fun loadBuiltinServices() {
         builtinServices.clear()
+        builtinServices.add(ServiceDirectMode(this))
+        builtinServices.add(ServiceChannelMode(this))
     }
 
     private fun loadBuiltinCommands() {
@@ -324,51 +241,6 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
                 return command
 
         return null
-    }
-
-    internal fun setupChannelMode() {
-        if (mode == MODE_CHANNEL) return
-
-        directClients.forEach {
-            query.api.sendPrivateMessage(
-                it,
-                "Direct chat is now closed. You can send me commands via the ${botConfig.consoleName} channel."
-            )
-            query.api.removeClientFromServerGroup(
-                serverGroupId,
-                query.api.getClientInfo(it).databaseId
-            )
-        }
-        consoleChannelId = getConsoleChannel() ?: createConsoleChannel()
-        sendChannelMessage("I am back from DIRECT mode! The ${botConfig.consoleName} channel can be used again.")
-        mode = MODE_CHANNEL
-    }
-
-    internal fun setupDirectMode() {
-        if (mode == MODE_DIRECT) return
-
-        log.info("Switching to direct mode...")
-        directClients.clear()
-        log.info("Removing all users from the SneakyBOT server group...")
-        query.api.getServerGroupClients(serverGroupId).forEach {
-            query.api.removeClientFromServerGroup(serverGroupId, it.clientDatabaseId)
-        }
-        var clientListMsg = "I am now listening for commands on the direct chat.\n\nClients that can contact me:"
-        query.api.clients
-            .filter { client -> client.channelId == consoleChannelId && client.id != whoAmI.id }
-            .forEach { client ->
-                log.info("Adding client #${client.id} (${client.nickname}) to the directs list...")
-                directClients.add(client.id)
-                query.api.sendPrivateMessage(
-                    client.id,
-                    "You can now use the direct chat to communicate with me."
-                )
-                query.api.addClientToServerGroup(serverGroupId, client.databaseId)
-                clientListMsg += "\n - ${client.nickname}"
-            }
-        sendChannelMessage(clientListMsg)
-        log.info("Finished.")
-        mode = MODE_DIRECT
     }
 
     private fun connect(config: TS3Config): TS3Query {
@@ -429,31 +301,6 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
         }
     }
 
-    internal fun createConsoleChannel(): Int {
-        log.debug("Creating a new SneakyBOT Console channel...")
-        val properties = HashMap<ChannelProperty, String>()
-        properties[ChannelProperty.CHANNEL_FLAG_TEMPORARY] = "1"
-        properties[ChannelProperty.CHANNEL_TOPIC] = "Console for SneakyBOT"
-        properties[ChannelProperty.CHANNEL_NEEDED_TALK_POWER] = "100"
-        properties[ChannelProperty.CHANNEL_PASSWORD] = botConfig.consolePassword
-
-        val channelId = query.api.createChannel(botConfig.consoleName, properties)
-
-        log.debug("Done. Channel ID: #$channelId")
-        return channelId
-    }
-
-    internal fun getConsoleChannel(): Int? {
-        log.debug("Searching for an existing console channel...")
-        val consoleChannel = query.api.channels.find { it.name == botConfig.consoleName }
-        if (consoleChannel == null)
-            log.debug("No SneakyBOT Console channel found.")
-        else
-            log.debug("Using existing SneakyBOT Console channel with ID #${consoleChannel.id}")
-
-        return consoleChannel?.id
-    }
-
     internal fun sendChannelMessage(msg: String) {
         query.api.sendChannelMessage(msg)
     }
@@ -464,7 +311,7 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
             query.api.sendPrivateMessage(userId, msg)
     }
 
-    private fun isCommand(msg: String): Boolean = msg.startsWith("!") && msg.length >= 2
+    internal fun isCommand(msg: String): Boolean = msg.startsWith("!") && msg.length >= 2
 
     @Throws(NoSuchClientException::class)
     fun getClientById(clientId: Int): Client {
