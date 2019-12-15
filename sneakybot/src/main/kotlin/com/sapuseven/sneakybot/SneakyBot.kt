@@ -22,6 +22,7 @@ import com.xenomachina.argparser.ArgParser
 import com.xenomachina.argparser.mainBody
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.slf4j.impl.SimpleLogger
 import java.io.File
 import kotlin.collections.ArrayList
 import kotlin.system.exitProcess
@@ -29,7 +30,7 @@ import kotlin.system.exitProcess
 fun main(args: Array<String>) = mainBody {
     val botConfig = ArgParser(args).parseInto(::SneakyBotConfig)
     System.setProperty(
-        org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY,
+        SimpleLogger.DEFAULT_LOG_LEVEL_KEY,
         if (botConfig.debug) "DEBUG" else "INFO"
     ) // TODO: Allow the user to specify any log level
 
@@ -39,17 +40,18 @@ fun main(args: Array<String>) = mainBody {
         override fun run() {
             try {
                 bot.quit()
-            } catch (e: TS3CommandFailedException) {
-                bot.logCommandFailed(e, "Exception on shutdown")
+            } catch (e: Exception) {
+                bot.logException(e, "Exception on shutdown")
+                exitProcess(1)
             }
         }
     })
 
     try {
-        // TODO: This doesn't catch all exceptions yet
         bot.run()
-    } catch (e: TS3CommandFailedException) {
-        bot.logCommandFailed(e, "Exception during runtime")
+    } catch (e: Exception) {
+        bot.logException(e, "Exception during runtime")
+        exitProcess(1)
     }
 }
 
@@ -93,7 +95,7 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
             log.error("Connection failed: ${e.message}")
             exitProcess(EXIT_CODE_CONNECTION_ERROR)
         } catch (e: TS3CommandFailedException) {
-            logCommandFailed(e, "Login failed")
+            logException(e, "Login failed")
             exitProcess(EXIT_CODE_COMMAND_ERROR)
         }
 
@@ -128,7 +130,7 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
         return config
     }
 
-    internal fun logCommandFailed(e: TS3CommandFailedException, msg: String = "") {
+    internal fun logException(e: Exception, msg: String = "") {
         e.message?.let { message ->
             if (message.indexOf('\n') != -1) {
                 if (msg.isNotBlank())
