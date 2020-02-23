@@ -1,6 +1,5 @@
 package com.sapuseven.sneakybot.services
 
-import com.sapuseven.sneakybot.plugins.PluggableCommand
 import com.sapuseven.sneakybot.plugins.PluggableService
 import com.sapuseven.sneakybot.plugins.PluginManager
 
