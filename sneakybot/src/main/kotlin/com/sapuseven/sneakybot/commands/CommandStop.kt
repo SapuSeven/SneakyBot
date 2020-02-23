@@ -14,6 +14,11 @@ internal class CommandStop(private val bot: SneakyBot) : BuiltinCommand() {
     }
 
     override fun execute(cmd: ConsoleCommand, invokerId: Int): Boolean {
+        val msg = "Bye!"
+        if (bot.mode == SneakyBot.MODE_CHANNEL)
+            bot.sendChannelMessage(msg)
+        else if (bot.mode == SneakyBot.MODE_DIRECT)
+            bot.sendDirectMessage(msg)
         exitProcess(0)
     }
 }
