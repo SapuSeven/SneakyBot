@@ -5,6 +5,8 @@ import com.github.theholywaffle.teamspeak3.TS3Query
 import com.github.theholywaffle.teamspeak3.api.PermissionGroupDatabaseType
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException
 import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException
+import com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler
+import com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectStrategy
 import com.github.theholywaffle.teamspeak3.api.wrapper.Client
 import com.github.theholywaffle.teamspeak3.api.wrapper.ServerQueryInfo
 import com.sapuseven.sneakybot.commands.*
@@ -24,8 +26,8 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.slf4j.impl.SimpleLogger
 import java.io.File
-import kotlin.collections.ArrayList
 import kotlin.system.exitProcess
+
 
 fun main(args: Array<String>) = mainBody {
     val botConfig = ArgParser(args).parseInto(::SneakyBotConfig)
@@ -99,17 +101,6 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
             exitProcess(EXIT_CODE_COMMAND_ERROR)
         }
 
-        val whoAmI = query.api.whoAmI()
-        log.debug("My client id is ${whoAmI.id}.")
-
-        serverGroupId = discoverServerGroup()
-
-        postInit()
-
-        log.debug("Registering all event listeners...")
-        query.api.registerAllEvents()
-
-        log.info("Startup done.")
         log.debug(
             "I will now notify all users (in the console channel / direct contacts) that I have fully loaded all my components."
         )
@@ -127,6 +118,44 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
         config.setQueryPort(botConfig.port)
         config.setFloodRate(if (botConfig.unlimitedFloodRate) TS3Query.FloodRate.UNLIMITED else TS3Query.FloodRate.DEFAULT)
         config.setEnableCommunicationsLogging(botConfig.debug)
+
+        config.setReconnectStrategy(ReconnectStrategy.exponentialBackoff())
+        config.setConnectionHandler(object : ConnectionHandler {
+            override fun onConnect(ts3Query: TS3Query) {
+                query = ts3Query
+
+                log.debug("Logging in...")
+                query.api.login(botConfig.username, botConfig.password)
+
+                log.debug("Selecting virtual server #${botConfig.virtualServerId}...")
+                query.api.selectVirtualServerById(botConfig.virtualServerId)
+
+                whoAmI = query.api.whoAmI()
+                log.debug("Current nickname: ${whoAmI.nickname}")
+                if (whoAmI.nickname != botConfig.username) {
+                    log.debug("Changing nickname to ${botConfig.username}")
+                    query.api.setNickname(botConfig.username)
+                }
+
+                log.info("Successfully connected and logged in.")
+
+                val whoAmI = query.api.whoAmI()
+                log.debug("My client id is ${whoAmI.id}.")
+
+                serverGroupId = discoverServerGroup()
+                postInit()
+
+                log.debug("Registering all event listeners...")
+                query.api.registerAllEvents()
+
+                log.info("Startup done.")
+            }
+
+            override fun onDisconnect(ts3Query: TS3Query) {
+                stopPlugins()
+            }
+        })
+
         return config
     }
 
@@ -247,25 +276,7 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
 
     private fun connect(config: TS3Config): TS3Query {
         log.info("Connecting...")
-        val query = TS3Query(config)
-        query.connect()
-
-        log.debug("Logging in...")
-        query.api.login(botConfig.username, botConfig.password)
-
-        log.debug("Selecting virtual server #${botConfig.virtualServerId}...")
-        query.api.selectVirtualServerById(botConfig.virtualServerId)
-
-        whoAmI = query.api.whoAmI()
-        log.debug("Current nickname: ${whoAmI.nickname}")
-        if (whoAmI.nickname != botConfig.username) {
-            log.debug("Changing nickname to ${botConfig.username}")
-            query.api.setNickname(botConfig.username)
-        }
-
-        log.info("Successfully connected and logged in.")
-
-        return query
+        return TS3Query(config).also(TS3Query::connect)
     }
 
     private fun discoverServerGroup(): Int {
