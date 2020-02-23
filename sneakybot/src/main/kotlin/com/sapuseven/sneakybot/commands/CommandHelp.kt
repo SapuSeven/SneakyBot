@@ -15,7 +15,7 @@ internal class CommandHelp(private val bot: SneakyBot) : BuiltinCommand() {
         return when (cmd.paramCount()) {
             1 -> {
                 bot.manager.sendMessage(
-                    "\nAvailable Commands:${listHelp()}\n\n[***] ... REQUIRED\n<***> ... OPTIONAL",
+                    "Available Commands:${listHelp()}\n\n[***] ... REQUIRED\n<***> ... OPTIONAL",
                     invokerId
                 )
                 true

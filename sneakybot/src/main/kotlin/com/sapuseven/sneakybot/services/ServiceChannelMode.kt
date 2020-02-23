@@ -35,7 +35,7 @@ internal class ServiceChannelMode(private val bot: SneakyBot) : BuiltinService()
                     SneakyBot.log.info("User $name entered the Console channel.")
                     if (bot.mode == SneakyBot.MODE_CHANNEL)
                         bot.manager.sendMessage(
-                            "\nWelcome, " + name + ", to the SneakyBOT Console!\n" +
+                            "Welcome, " + name + ", to the SneakyBOT Console!\n" +
                                     "If you are new, '!help' is usually a good command for getting started.", e.clientId
                         )
                 }

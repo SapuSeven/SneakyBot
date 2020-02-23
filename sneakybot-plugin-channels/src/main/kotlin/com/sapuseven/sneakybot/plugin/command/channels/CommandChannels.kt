@@ -34,7 +34,7 @@ class CommandChannels : PluggableCommand {
                 }.joinToString("\n")
             }
 
-            manager.sendMessage("\nChannel list:\n$channelList", invokerId)
+            manager.sendMessage("Channel list:\n$channelList", invokerId)
             true
         } ?: false
     }

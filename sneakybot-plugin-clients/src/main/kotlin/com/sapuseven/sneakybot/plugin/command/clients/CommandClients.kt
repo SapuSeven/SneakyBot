@@ -34,7 +34,7 @@ class CommandClients : PluggableCommand {
                 }.joinToString("\n")
             }
 
-            manager.sendMessage("\nClient list:\n$clientList", invokerId)
+            manager.sendMessage("Client list:\n$clientList", invokerId)
             return true
         } ?: run {
             return false
