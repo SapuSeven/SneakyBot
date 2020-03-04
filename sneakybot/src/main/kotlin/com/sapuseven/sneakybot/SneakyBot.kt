@@ -132,9 +132,10 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
 
                 whoAmI = query.api.whoAmI()
                 log.debug("Current nickname: ${whoAmI.nickname}")
-                if (whoAmI.nickname != botConfig.username) {
-                    log.debug("Changing nickname to ${botConfig.username}")
-                    query.api.setNickname(botConfig.username)
+                val newName = if (botConfig.debug) botConfig.username + "-Dev" else botConfig.username
+                if (whoAmI.nickname != newName) {
+                    log.debug("Changing nickname to $newName")
+                    query.api.setNickname(newName)
                 }
 
                 log.info("Successfully connected and logged in.")
