@@ -36,10 +36,17 @@ class SneakyBotConfig(parser: ArgParser) {
         help = "the ServerQuery password to use for connecting to the TeamSpeak3 Server"
     )
 
+    val config: String by parser.storing(
+        "-c",
+        "--config",
+        help = "a path to the SneakyBOT configuration file"
+    )
+        .default("config.ini")
+
     val unlimitedFloodRate: Boolean by parser.flagging(
         "-f",
         "--unlimited",
-        help = "enable unlimitedflood rate (ATTENTION: only use if your IP is whitelisted in the TeamSpeak3 server configuration)"
+        help = "enable unlimited flood rate (ATTENTION: only use if your IP is whitelisted in the TeamSpeak3 server configuration)"
     )
 
     val debug: Boolean by parser.flagging(

@@ -3,6 +3,7 @@ package com.sapuseven.sneakybot.plugins
 import com.github.theholywaffle.teamspeak3.TS3Api
 import com.sapuseven.sneakybot.exceptions.NoSuchClientException
 import java.io.File
+import java.util.prefs.Preferences
 
 /**
  * The main PluginManager structure.
@@ -52,4 +53,6 @@ interface PluginManager {
      * @param interval The interval in seconds in which the timers action should be executed
      */
     fun addTimer(timer: Timer, interval: Int)
+
+    fun getConfiguration(name: String): Preferences
 }

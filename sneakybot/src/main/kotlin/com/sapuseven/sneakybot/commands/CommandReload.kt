@@ -15,7 +15,7 @@ internal class CommandReload(private val bot: SneakyBot) : BuiltinCommand() {
     }
 
     override fun execute(cmd: ConsoleCommand, invokerId: Int): Boolean {
-        log.info("Reloading plugins...")
+        log.info("Reloading plugins and config...")
 
         bot.stopPlugins()
         bot.loadPlugins()

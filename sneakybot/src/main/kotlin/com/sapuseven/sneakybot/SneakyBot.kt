@@ -22,10 +22,16 @@ import com.sapuseven.sneakybot.utils.PluginLoader
 import com.sapuseven.sneakybot.utils.SneakyBotConfig
 import com.xenomachina.argparser.ArgParser
 import com.xenomachina.argparser.mainBody
+import org.ini4j.Ini
+import org.ini4j.IniPreferences
+import org.ini4j.InvalidFileFormatException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.slf4j.impl.SimpleLogger
 import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.util.prefs.Preferences
 import kotlin.system.exitProcess
 
 
@@ -70,6 +76,7 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
     internal val services = ArrayList<PluggableService>()
 
     private val timers = ArrayList<Thread>()
+    private lateinit var config: Preferences
     lateinit var manager: PluginManagerImpl
 
     companion object {
@@ -198,6 +205,10 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
     }
 
     internal fun preInit() {
+        log.info("Loading configuration...")
+
+        config = loadConfig()
+
         log.info("Initializing plugins (Phase 1)...")
 
         for (p in services + builtinServices) {
@@ -219,6 +230,15 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
             if (!t.isAlive)
                 t.start()
         }
+    }
+
+    private fun loadConfig(): Preferences {
+        val file = File(botConfig.config)
+
+        if (!file.exists())
+            FileOutputStream(file).close() // Create file
+
+        return IniPreferences(Ini(file))
     }
 
     private fun loadBuiltinServices() {
@@ -350,5 +370,9 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
                 }
             }
         )
+    }
+
+    fun getConfig(name: String): Preferences {
+        return config.node(name)
     }
 }

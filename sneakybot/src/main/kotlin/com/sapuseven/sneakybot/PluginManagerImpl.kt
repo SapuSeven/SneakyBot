@@ -7,6 +7,7 @@ import com.sapuseven.sneakybot.plugins.Timer
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.util.*
+import java.util.prefs.Preferences
 import kotlin.math.min
 
 class PluginManagerImpl internal constructor(private val bot: SneakyBot) : PluginManager {
@@ -55,4 +56,6 @@ class PluginManagerImpl internal constructor(private val bot: SneakyBot) : Plugi
     override fun getClientNameById(clientId: Int): String = bot.getClientById(clientId).nickname
 
     override fun addTimer(timer: Timer, interval: Int) = bot.addTimer(timer, interval)
+
+    override fun getConfiguration(name: String): Preferences = bot.getConfig(name)
 }
