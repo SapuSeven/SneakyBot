@@ -6,3 +6,4 @@
 /plugins
 !gradle-wrapper.jar
 /.scannerwork
+config.ini

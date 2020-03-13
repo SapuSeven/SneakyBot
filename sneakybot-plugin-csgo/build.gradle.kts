@@ -14,6 +14,7 @@ repositories {
 
 dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.20.0")
     compileOnly(kotlin("stdlib-jdk8"))
     compileOnly(project(":sneakybot-sdk"))
     compileOnly("org.slf4j:slf4j-simple:1.7.2")
