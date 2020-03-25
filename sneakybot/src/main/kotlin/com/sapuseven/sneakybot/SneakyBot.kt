@@ -214,7 +214,11 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
         for (p in services + builtinServices) {
             p.setPluginManager(manager)
             log.debug("PreInit: " + p.javaClass.simpleName)
-            p.preInit(manager)
+            try {
+                p.preInit(manager)
+            } catch (e: java.lang.Exception) {
+                logException(e, p.javaClass.simpleName + " threw an Exception during preInit()")
+            }
         }
     }
 
@@ -223,7 +227,11 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
 
         for (p in services + builtinServices) {
             log.debug("PostInit: " + p.javaClass.simpleName)
-            p.postInit(manager)
+            try {
+                p.postInit(manager)
+            } catch (e: java.lang.Exception) {
+                logException(e, p.javaClass.simpleName + " threw an Exception during postInit()")
+            }
         }
 
         for (t in timers) {
