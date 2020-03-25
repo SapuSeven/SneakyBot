@@ -87,11 +87,11 @@ class ServiceLock : PluggableService {
                     manager.api?.moveClient(clientId, lockedClient.channelId)
                     return true
                 } catch (e: TS3CommandFailedException) {
-                    if (e.error.id != ERROR_ID_ALREADY_MEMBER_OF_CHANNEL) {
-                        invokerId?.let { manager.sendMessage("Client could not be moved: ${e.error.message}", it) }
-                        unlockClient(clientId)
-                        return false
-                    }
+                    if (e.error.id == ERROR_ID_ALREADY_MEMBER_OF_CHANNEL) return true
+
+                    invokerId?.let { manager.sendMessage("Client could not be moved: ${e.error.message}", it) }
+                    unlockClient(clientId)
+                    return false
                 }
         }
         invokerId?.let { manager.sendMessage("Client not found!", it) }
