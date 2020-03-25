@@ -13,12 +13,13 @@ class TimerRankUpdate : Timer {
     private val rankCache: MutableMap<String, CsGoRank> = mutableMapOf()
 
     @kotlinx.serialization.ImplicitReflectionSerializer
-    override fun actionPerformed(manager: PluginManager) {
+    @kotlinx.serialization.UnstableDefault
+    override fun actionPerformed(pluginManager: PluginManager) {
         val ranks = loadRanksFromServer()
         Json.parseMap<String, Int>(ranks).forEach { rank ->
             val rankValue = CsGoRank.values().find { it.rankId == rank.value } ?: CsGoRank.NONE
             if (rankCache[rank.key] != rankValue)
-                updateRank(manager, rank.key, rankValue)
+                updateRank(pluginManager, rank.key, rankValue)
             rankCache[rank.key] = rankValue
         }
     }
