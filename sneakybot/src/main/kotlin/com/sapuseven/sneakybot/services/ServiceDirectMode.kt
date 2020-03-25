@@ -3,7 +3,6 @@ package com.sapuseven.sneakybot.services
 import com.github.theholywaffle.teamspeak3.api.TextMessageTargetMode
 import com.github.theholywaffle.teamspeak3.api.event.BaseEvent
 import com.github.theholywaffle.teamspeak3.api.event.ClientJoinEvent
-import com.github.theholywaffle.teamspeak3.api.event.ClientLeaveEvent
 import com.github.theholywaffle.teamspeak3.api.event.TextMessageEvent
 import com.sapuseven.sneakybot.SneakyBot
 import com.sapuseven.sneakybot.plugins.PluginManager
@@ -28,14 +27,15 @@ internal class ServiceDirectMode(private val bot: SneakyBot) : BuiltinService() 
                 if (e.targetMode == TextMessageTargetMode.CLIENT) interpretDirectMessage(e)
             }
             is ClientJoinEvent -> {
-                if (bot.query.api.getServerGroupsByClientId(e.clientDatabaseId).filter { it.id == bot.serverGroupId }.size > 0) {
-
-                }
-            }
-            is ClientLeaveEvent -> {
-                bot.directClients.removeIf { it == e.clientId }
-                if (bot.directClients.isEmpty()) {
-
+                // If a user joins who is already in the SneakyBOT server group, setup direct mode or add to directs
+                if (bot.query.api.getServerGroupsByClientId(e.clientDatabaseId).any { it.id == bot.serverGroupId }) {
+                    if (bot.mode == SneakyBot.MODE_DIRECT) {
+                        // Add client to directs
+                        addDirectClient(e.clientId, e.clientDatabaseId)
+                    } else {
+                        // Switch mode to direct
+                        setupDirectMode(e.clientId)
+                    }
                 }
             }
         }
@@ -87,14 +87,10 @@ internal class ServiceDirectMode(private val bot: SneakyBot) : BuiltinService() 
     private fun lookForExistingDirectClients() {
         SneakyBot.log.info("Looking for existing direct clients...")
 
-        for (serverGroupClient in bot.query.api.getServerGroupClients(bot.serverGroupId)) {
-            if (serverGroupClient.nickname != bot.botConfig.username) {
-                for (onlineClient in bot.query.api.clients) {
-                    if (onlineClient.nickname != bot.botConfig.username && onlineClient.uniqueIdentifier == serverGroupClient.uniqueIdentifier) {
-                        bot.directClients.add(onlineClient.id)
-                        bot.mode = SneakyBot.MODE_DIRECT
-                    }
-                }
+        for (client in bot.query.api.clients) {
+            if (client.serverGroups.contains(bot.serverGroupId)) {
+                bot.directClients.add(client.id)
+                bot.mode = SneakyBot.MODE_DIRECT
             }
         }
     }
@@ -102,27 +98,37 @@ internal class ServiceDirectMode(private val bot: SneakyBot) : BuiltinService() 
     private fun setupDirectMode(invokerId: Int) {
         SneakyBot.log.info("Switching to direct mode...")
         bot.directClients.clear()
+        val clientInfo = bot.query.api.getClientInfo(invokerId)
         SneakyBot.log.info("Removing all users from the SneakyBOT server group...")
         bot.query.api.getServerGroupClients(bot.serverGroupId).forEach {
-            bot.query.api.removeClientFromServerGroup(bot.serverGroupId, it.clientDatabaseId)
+            if (clientInfo.databaseId != it.clientDatabaseId)
+                bot.query.api.removeClientFromServerGroup(bot.serverGroupId, it.clientDatabaseId)
         }
-        val consoleChannelId = bot.query.api.getClientInfo(invokerId).channelId
+        val consoleChannelId = clientInfo.channelId
 
         var clientListMsg = "I am now listening for commands on the direct chat.\n\nClients that can contact me:"
         bot.query.api.clients
-            .filter { client -> client.channelId == consoleChannelId && client.id != bot.whoAmI.id }
+            .filter { client ->
+                client.channelId == consoleChannelId
+                        && client.id != bot.whoAmI.id
+            }
             .forEach { client ->
                 SneakyBot.log.info("Adding client #${client.id} (${client.nickname}) to the directs list...")
-                bot.directClients.add(client.id)
-                bot.query.api.sendPrivateMessage(
-                    client.id,
-                    "You can now use the direct chat to communicate with me."
-                )
-                bot.query.api.addClientToServerGroup(bot.serverGroupId, client.databaseId)
+                addDirectClient(client.id, client.databaseId, client.databaseId != clientInfo.databaseId)
                 clientListMsg += "\n - ${client.nickname}"
             }
         bot.sendChannelMessage(clientListMsg)
         SneakyBot.log.info("Finished.")
         bot.mode = SneakyBot.MODE_DIRECT
+    }
+
+    private fun addDirectClient(clientId: Int, clientDatabaseId: Int, shouldAddToServerGroup: Boolean = true) {
+        bot.directClients.add(clientId)
+        bot.query.api.sendPrivateMessage(
+            clientId,
+            "You can now use the direct chat to communicate with me."
+        )
+        if (shouldAddToServerGroup)
+            bot.query.api.addClientToServerGroup(bot.serverGroupId, clientDatabaseId)
     }
 }

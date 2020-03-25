@@ -15,7 +15,7 @@ internal class ServiceChannelMode(private val bot: SneakyBot) : BuiltinService()
     }
 
     override fun postInit(pluginManager: PluginManager) {
-        consoleChannelId = getConsoleChannel() ?: createConsoleChannel()
+        findNewConsoleChannel()
 
         val whoAmI = bot.query.api.whoAmI()
         if (whoAmI.channelId != consoleChannelId) {
@@ -52,6 +52,15 @@ internal class ServiceChannelMode(private val bot: SneakyBot) : BuiltinService()
             is ChannelDeletedEvent -> {
                 if (e.channelId == consoleChannelId)
                     findNewConsoleChannel()
+            }
+            is ClientLeaveEvent -> {
+                if (bot.mode != SneakyBot.MODE_DIRECT) return
+
+                // Remove from directs list but keep in server group
+                bot.directClients.removeIf { it == e.clientId }
+                if (bot.directClients.isEmpty()) {
+                    setupChannelMode()
+                }
             }
         }
     }
@@ -126,7 +135,7 @@ internal class ServiceChannelMode(private val bot: SneakyBot) : BuiltinService()
                 bot.query.api.getClientInfo(it).databaseId
             )
         }
-        consoleChannelId = getConsoleChannel() ?: createConsoleChannel()
+        findNewConsoleChannel()
         bot.sendChannelMessage("I am back from DIRECT mode! The ${bot.botConfig.consoleName} channel can be used again.")
         bot.mode = SneakyBot.MODE_CHANNEL
     }
