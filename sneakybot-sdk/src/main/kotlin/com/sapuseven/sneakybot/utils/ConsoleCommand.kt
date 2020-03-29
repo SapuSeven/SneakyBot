@@ -1,4 +1,5 @@
 @file:Suppress("unused", "UNUSED_PARAMETER")
+
 package com.sapuseven.sneakybot.utils
 
 /**
@@ -6,10 +7,10 @@ package com.sapuseven.sneakybot.utils
  *
  * These methods are just a reference to the actual code.
  */
- class ConsoleCommand(command: String) {
+class ConsoleCommand(command: String) {
     val commandName: String = ""
 
-     fun getParam(index: Int): String = ""
+    fun getParam(index: Int): String = ""
 
-     fun paramCount(): Int = 0
- }
+    fun paramCount(): Int = 0
+}
