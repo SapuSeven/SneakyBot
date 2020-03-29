@@ -15,7 +15,6 @@ class ServiceRankUpdate : PluggableService {
     override fun postInit(pluginManager: PluginManager) {
         val timer = TimerRankUpdate()
         pluginManager.addTimer(timer, 1)
-        timer.actionPerformed(pluginManager)
     }
 
     override fun stop(pluginManager: PluginManager) {

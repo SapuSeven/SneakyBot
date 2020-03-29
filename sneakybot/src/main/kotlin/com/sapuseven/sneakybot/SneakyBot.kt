@@ -80,8 +80,8 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
     lateinit var manager: PluginManagerImpl
 
     companion object {
-        const val MODE_DIRECT = 0x0001
-        const val MODE_CHANNEL = 0x0002
+        const val MODE_DIRECT = 1
+        const val MODE_CHANNEL = 2
 
         const val EXIT_CODE_COMMAND_ERROR = 1
         const val EXIT_CODE_CONNECTION_ERROR = 2
@@ -348,7 +348,6 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
     }
 
     internal fun sendDirectMessage(msg: String) {
-        // TODO: This will throw an exception if the direct client is gone. Remove any client that leaves the server and fall back to channel mode if no more direct clients exist.
         for (userId in directClients)
             query.api.sendPrivateMessage(userId, msg)
     }
@@ -368,11 +367,14 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
             Thread {
                 var running = true
                 while (running) {
-                    timer.actionPerformed(manager)
                     try {
+                        timer.actionPerformed(manager)
                         Thread.sleep((interval * 1000).toLong())
                     } catch (e: InterruptedException) {
                         log.debug("Timer stopped")
+                        running = false
+                    } catch (e: Exception) {
+                        logException(e, "Timer threw an exception")
                         running = false
                     }
                 }
