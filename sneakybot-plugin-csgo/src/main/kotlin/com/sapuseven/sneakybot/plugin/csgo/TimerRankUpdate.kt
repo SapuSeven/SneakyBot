@@ -15,12 +15,18 @@ class TimerRankUpdate : Timer {
     @kotlinx.serialization.ImplicitReflectionSerializer
     @kotlinx.serialization.UnstableDefault
     override fun actionPerformed(pluginManager: PluginManager) {
-        val ranks = loadRanksFromServer()
-        Json.parseMap<String, Int>(ranks).forEach { rank ->
-            val rankValue = CsGoRank.values().find { it.rankId == rank.value } ?: CsGoRank.NONE
-            if (rankCache[rank.key] != rankValue)
-                updateRank(pluginManager, rank.key, rankValue)
-            rankCache[rank.key] = rankValue
+        try {
+            val ranks = loadRanksFromServer()
+
+            Json.parseMap<String, Int>(ranks).forEach { rank ->
+                val rankValue = CsGoRank.values().find { it.rankId == rank.value } ?: CsGoRank.NONE
+                if (rankCache[rank.key] != rankValue)
+                    updateRank(pluginManager, rank.key, rankValue)
+                rankCache[rank.key] = rankValue
+            }
+        } catch (e: IOException) {
+            pluginManager.sendMessage("An error occurred while trying to connect to the rank provider server (${e.javaClass.simpleName}: ${e.message}).")
+            throw e
         }
     }
 
@@ -41,8 +47,9 @@ class TimerRankUpdate : Timer {
                     api.removeClientFromServerGroup(it.id, client.databaseId)
             }
 
-            if (existingRankGroups.find { it.id == sgid } == null)
-                api.addClientToServerGroup(sgid, client.databaseId)
+            if (rank != CsGoRank.NONE)
+                if (existingRankGroups.find { it.id == sgid } == null)
+                    api.addClientToServerGroup(sgid, client.databaseId)
         }
     }
 
