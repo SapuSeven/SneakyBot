@@ -17,6 +17,7 @@ internal class ServiceDirectMode(private val bot: SneakyBot) : BuiltinService() 
     }
 
     override fun stop(pluginManager: PluginManager) {
+        bot.directClients.clear()
     }
 
     override fun onEventReceived(e: BaseEvent) {

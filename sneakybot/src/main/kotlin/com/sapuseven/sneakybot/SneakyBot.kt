@@ -68,7 +68,7 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
     internal var mode: Int = MODE_CHANNEL
     internal lateinit var whoAmI: ServerQueryInfo
     internal var serverGroupId: Int = -1
-    internal val directClients = ArrayList<Int>()
+    internal val directClients = mutableSetOf<Int>()
 
     internal val builtinCommands = ArrayList<PluggableCommand>()
     internal val commands = ArrayList<PluggableCommand>()
