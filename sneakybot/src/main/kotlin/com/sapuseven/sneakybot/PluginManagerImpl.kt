@@ -15,7 +15,7 @@ class PluginManagerImpl internal constructor(private val bot: SneakyBot) : Plugi
         get() = bot.query.api
     private val log = LoggerFactory.getLogger(PluginManagerImpl::class.java)
 
-    override fun sendMessage(msg: String, clientId: Int) {
+    override fun sendMessage(msg: String, clientId: Int?) {
         api?.let { api ->
             val msgParts = ArrayList<String>()
 
@@ -37,8 +37,12 @@ class PluginManagerImpl internal constructor(private val bot: SneakyBot) : Plugi
             }
 
             if (bot.mode == SneakyBot.MODE_DIRECT)
-                for (msgPart in msgParts)
-                    api.sendPrivateMessage(clientId, msgPart)
+                for (msgPart in msgParts) {
+                    if (clientId != null)
+                        api.sendPrivateMessage(clientId, msgPart)
+                    else
+                        bot.sendDirectMessage(msgPart)
+                }
             else if (bot.mode == SneakyBot.MODE_CHANNEL)
                 for (msgPart in msgParts)
                     api.sendChannelMessage(msgPart)

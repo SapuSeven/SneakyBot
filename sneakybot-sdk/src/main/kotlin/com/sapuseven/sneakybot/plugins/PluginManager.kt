@@ -18,14 +18,14 @@ interface PluginManager {
     val api: TS3Api?
 
     /**
-     * Send a message to the target user specified by it's id.
+     * Send a chat message to bot users.
      *
-     * Console channel will be used if the mode is `MODE_CHANNEL`.
+     * Channel or direct messages will be used according to the bot's current mode.
      *
      * @param msg The message to be sent.
-     * @param clientId The target users ID.
+     * @param clientId The target user ID. Only used when in direct mode. If `null`, the message will be sent to every direct user.
      */
-    fun sendMessage(msg: String, clientId: Int)
+    fun sendMessage(msg: String, clientId: Int? = null)
 
     /**
      * Use this method to access a file in the plugins managed data directory.
