@@ -30,17 +30,17 @@ class TimerIdleCheck internal constructor(
 					|| (config.excludedChannels.contains(c.channelId))
 				) continue
 
-				if (responseRequests.containsKey(c.id) && c.idleTime < config.idleTimeThreshold)
+				if (responseRequests.containsKey(c.id) && c.idleTime < config.idleTimeThreshold * 1000)
 					responseRequests.remove(c.id)
 
 				if (
 					!responseRequests.containsKey(c.id)
-					&& c.idleTime >= config.idleTimeThreshold
+					&& c.idleTime >= config.idleTimeThreshold * 1000
 				)
 					autoAwayRequestResponse(api, c)
 				else if (
 					responseRequests.containsKey(c.id)
-					&& currentTimeMillis() - (responseRequests[c.id] ?: 0) >= config.idleTimeResponseThreshold
+					&& currentTimeMillis() - (responseRequests[c.id] ?: 0) >= config.idleTimeResponseThreshold * 1000
 				)
 					autoAway(api, c)
 			}
