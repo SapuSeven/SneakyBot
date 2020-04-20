@@ -30,12 +30,15 @@ class TimerIdleCheck internal constructor(
 					|| (config.excludedChannels.contains(c.channelId))
 				) continue
 
-				if (responseRequests.containsKey(c.id) && c.idleTime < config.idleTimeThreshold * 1000)
+				val idleTimeThresholdMillis =
+					if (c.isOutputMuted) config.idleTimeMutedThreshold * 1000 else config.idleTimeThreshold * 1000
+
+				if (responseRequests.containsKey(c.id) && c.idleTime < idleTimeThresholdMillis)
 					responseRequests.remove(c.id)
 
 				if (
 					!responseRequests.containsKey(c.id)
-					&& c.idleTime >= config.idleTimeThreshold * 1000
+					&& c.idleTime >= idleTimeThresholdMillis
 				)
 					autoAwayRequestResponse(api, c)
 				else if (
