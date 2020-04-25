@@ -52,7 +52,7 @@ interface PluginManager {
      *
      * @param interval The interval in seconds in which the timers action should be executed
      */
-    fun addTimer(timer: Timer, interval: Int)
+    fun addTimer(timer: Timer, interval: Int, restartTimeout: Int = 0)
 
     fun getConfiguration(name: String): Preferences
 }

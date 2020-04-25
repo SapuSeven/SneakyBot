@@ -59,7 +59,8 @@ class PluginManagerImpl internal constructor(private val bot: SneakyBot) : Plugi
     @Throws(NoSuchClientException::class)
     override fun getClientNameById(clientId: Int): String = bot.getClientById(clientId).nickname
 
-    override fun addTimer(timer: Timer, interval: Int) = bot.addTimer(timer, interval)
+    override fun addTimer(timer: Timer, interval: Int, restartTimeout: Int) =
+        bot.addTimer(timer, interval, restartTimeout)
 
     override fun getConfiguration(name: String): Preferences = bot.getConfig(name)
 }

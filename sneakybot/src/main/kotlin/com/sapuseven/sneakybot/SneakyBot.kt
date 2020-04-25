@@ -360,7 +360,7 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
 		throw NoSuchClientException()
 	}
 
-	internal fun addTimer(timer: Timer, interval: Int) {
+	internal fun addTimer(timer: Timer, interval: Int, restartTimeout: Int) {
 		timers.add(
 			TimerThread(
 				timer.javaClass.name,
@@ -375,7 +375,10 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
 							running = false
 						} catch (e: Exception) {
 							logException(e, "Timer threw an exception")
-							running = false
+							if (restartTimeout > 0)
+								Thread.sleep((restartTimeout * 1000).toLong())
+							else
+								running = false
 						}
 					}
 				}
