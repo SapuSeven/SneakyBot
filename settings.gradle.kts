@@ -11,4 +11,5 @@ include("sneakybot-plugin-panic")
 include("sneakybot-plugin-ping")
 include("sneakybot-plugin-poke")
 include("sneakybot-plugin-say")
+include("sneakybot-plugin-swap")
 //include("sneakybot-plugin-stats") // This plugin doesn't work at all yet
