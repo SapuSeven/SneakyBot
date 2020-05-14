@@ -14,7 +14,7 @@ class CommandKickClones : PluggableCommand {
 
 	init {
 		command.commandName = "kickclones"
-		command.help = "Kicks all clones from the server."
+		command.help = "Kicks all clones from the server. Looks for matching IP addresses."
 	}
 
 	override fun execute(cmd: ConsoleCommand, invokerId: Int): Boolean {
