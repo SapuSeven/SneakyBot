@@ -13,15 +13,15 @@ object Utils {
 	@Throws(IOException::class)
 	fun loadRanksFromServer(manager: PluginManager): String {
 		if (!::serverUrl.isInitialized)
-			serverUrl = manager.getConfiguration("PluginCsGo-RankGroupMapping").run {
+			serverUrl = manager.getConfiguration("PluginCsGo-RankProviderApi").run {
 				URI(
-					get("apiScheme", "http"),
-					get("apiUserInfo", null),
-					get("apiHost", "localhost"),
-					getInt("apiPort", 7300),
-					get("apiPath", "/ranks"),
-					get("apiQuery", null),
-					get("apiFragment", null)
+					get("scheme", "http"),
+					get("userInfo", null),
+					get("host", "localhost"),
+					getInt("port", 7300),
+					get("path", "/ranks"),
+					get("query", null),
+					get("fragment", null)
 				).toURL()
 			}
 
