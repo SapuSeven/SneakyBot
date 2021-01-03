@@ -50,7 +50,7 @@ class CommandCsGoRank : PluggableCommand {
 
 	@kotlinx.serialization.UnstableDefault
 	private fun getRankForSteamId(steamId: String): CsGoRank? {
-		val ranks = Utils.loadRanksFromServer()
+		val ranks = Utils.loadRanksFromServer(manager)
 
 		val rankId = Json.parseMap<String, Int>(ranks)[steamId]
 

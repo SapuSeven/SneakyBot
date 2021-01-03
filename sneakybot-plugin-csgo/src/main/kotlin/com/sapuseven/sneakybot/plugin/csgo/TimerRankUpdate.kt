@@ -14,7 +14,7 @@ class TimerRankUpdate : Timer {
 	@kotlinx.serialization.UnstableDefault
 	override fun actionPerformed(pluginManager: PluginManager) {
 		try {
-			val ranks = Utils.loadRanksFromServer()
+			val ranks = Utils.loadRanksFromServer(pluginManager)
 
 			Json.parseMap<String, Int>(ranks).forEach { rank ->
 				val rankValue = CsGoRank.values().find { it.rankId == rank.value } ?: CsGoRank.NONE

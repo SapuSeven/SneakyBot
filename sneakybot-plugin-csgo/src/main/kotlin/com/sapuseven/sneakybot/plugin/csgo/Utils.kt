@@ -3,14 +3,29 @@ package com.sapuseven.sneakybot.plugin.csgo
 import com.sapuseven.sneakybot.plugins.PluginManager
 import java.io.IOException
 import java.net.HttpURLConnection
+import java.net.URI
 import java.net.URL
 import java.util.*
 
 object Utils {
+	lateinit var serverUrl: URL
+
 	@Throws(IOException::class)
-	fun loadRanksFromServer(): String {
-		val url = URL("http://localhost:7300/ranks")
-		val conn: HttpURLConnection = url.openConnection() as HttpURLConnection
+	fun loadRanksFromServer(manager: PluginManager): String {
+		if (!::serverUrl.isInitialized)
+			serverUrl = manager.getConfiguration("PluginCsGo-RankGroupMapping").run {
+				URI(
+					get("apiScheme", "http"),
+					get("apiUserInfo", null),
+					get("apiHost", "localhost"),
+					getInt("apiPort", 7300),
+					get("apiPath", "/ranks"),
+					get("apiQuery", null),
+					get("apiFragment", null)
+				).toURL()
+			}
+
+		val conn: HttpURLConnection = serverUrl.openConnection() as HttpURLConnection
 		conn.requestMethod = "GET"
 
 		conn.connect()
@@ -18,7 +33,7 @@ object Utils {
 		val responseCode: Int = conn.responseCode
 
 		if (responseCode != 200) throw IOException("HTTP$responseCode") else {
-			Scanner(url.openStream()).apply {
+			Scanner(serverUrl.openStream()).apply {
 				val line = nextLine()
 				close()
 				return line

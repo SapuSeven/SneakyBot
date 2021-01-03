@@ -22,7 +22,7 @@ class CommandCsGoRanksTest : PluggableCommand {
 	override fun execute(cmd: ConsoleCommand, invokerId: Int): Boolean {
 		return if (::manager.isInitialized) {
 			try {
-				val result = Utils.loadRanksFromServer()
+				val result = Utils.loadRanksFromServer(manager)
 				manager.sendMessage(result, invokerId)
 			} catch (e: IOException) {
 				manager.sendMessage("Connection failed (${e.message})", invokerId)
