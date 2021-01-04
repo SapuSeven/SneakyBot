@@ -10,14 +10,17 @@ import com.sapuseven.sneakybot.utils.ConsoleCommand
 class ServiceKickClones : PluggableService {
 	private lateinit var manager: PluginManager
 	private lateinit var whoAmI: ServerQueryInfo
+	private var enabled = false
 
 	override fun preInit(pluginManager: PluginManager) {
 		// unused
 	}
 
 	override fun postInit(pluginManager: PluginManager) {
-		whoAmI = pluginManager.api!!.whoAmI()
-		Utils.kickClones(pluginManager)
+		if (enabled) {
+			whoAmI = pluginManager.api!!.whoAmI()
+			Utils.kickClones(pluginManager)
+		}
 	}
 
 	override fun stop(pluginManager: PluginManager) {
@@ -25,7 +28,7 @@ class ServiceKickClones : PluggableService {
 	}
 
 	override fun onEventReceived(e: BaseEvent) {
-		if (e is ClientJoinEvent) {
+		if (enabled && e is ClientJoinEvent) {
 			manager.api?.let { api ->
 				if (api.clients.filter { it.id != e.clientId }.any { it.uniqueIdentifier == e.uniqueClientIdentifier })
 					api.kickClientFromServer(e.clientId)
@@ -38,5 +41,6 @@ class ServiceKickClones : PluggableService {
 
 	override fun setPluginManager(pluginManager: PluginManager) {
 		this.manager = pluginManager
+		enabled = pluginManager.getConfiguration("PluginAutoKick").getBoolean("serviceEnabled", enabled)
 	}
 }
