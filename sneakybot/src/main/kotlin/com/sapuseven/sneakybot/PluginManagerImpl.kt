@@ -15,7 +15,7 @@ class PluginManagerImpl internal constructor(private val bot: SneakyBot) : Plugi
         get() = bot.query.api
     private val log = LoggerFactory.getLogger(PluginManagerImpl::class.java)
 
-    override fun sendMessage(msg: String, clientId: Int?) {
+    override fun sendMessage(msg: String, clientId: Int?, forcePrivateChat: Boolean) {
         api?.let { api ->
             val msgParts = ArrayList<String>()
 
@@ -36,7 +36,7 @@ class PluginManagerImpl internal constructor(private val bot: SneakyBot) : Plugi
                 i += index
             }
 
-            if (bot.mode == SneakyBot.MODE_DIRECT)
+            if (bot.mode == SneakyBot.MODE_DIRECT || forcePrivateChat)
                 for (msgPart in msgParts) {
                     if (clientId != null)
                         api.sendPrivateMessage(clientId, msgPart)

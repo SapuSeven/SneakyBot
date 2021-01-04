@@ -23,9 +23,12 @@ interface PluginManager {
      * Channel or direct messages will be used according to the bot's current mode.
      *
      * @param msg The message to be sent.
-     * @param clientId The target user ID. Only used when in direct mode. If `null`, the message will be sent to every direct user.
+     * @param clientId The target user ID.
+     * Used to only target a single user when in direct mode or if [forcePrivateChat] is `true`.
+     * If `null`, the message will be sent to every user that has control of the bot.
+     * @param forcePrivateChat Set to `true` to send a private message, regardless of the current mode.
      */
-    fun sendMessage(msg: String, clientId: Int? = null)
+    fun sendMessage(msg: String, clientId: Int? = null, forcePrivateChat: Boolean = false)
 
     /**
      * Use this method to access a file in the plugins managed data directory.
