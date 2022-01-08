@@ -4,7 +4,7 @@ group = "com.sapuseven.sneakybot"
 version = "1.0"
 
 plugins {
-    kotlin("jvm") version "1.3.41"
+    kotlin("jvm") version "1.6.10"
     application
 }
 
@@ -27,5 +27,5 @@ tasks.withType<KotlinCompile>().configureEach {
 }
 
 application {
-    mainClassName = "com.sapuseven.sneakybot.SneakyBot" + "Kt"
+    mainClass.set("com.sapuseven.sneakybot.SneakyBot" + "Kt")
 }

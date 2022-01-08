@@ -2,6 +2,7 @@ package com.sapuseven.sneakybot.plugin.csgo
 
 import com.sapuseven.sneakybot.plugins.PluginManager
 import com.sapuseven.sneakybot.plugins.Timer
+import kotlinx.serialization.ImplicitReflectionSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.parseMap
 import java.io.IOException
@@ -10,8 +11,7 @@ import java.io.IOException
 class TimerRankUpdate : Timer {
 	private val rankCache: MutableMap<String, CsGoRank> = mutableMapOf()
 
-	@kotlinx.serialization.ImplicitReflectionSerializer
-	@kotlinx.serialization.UnstableDefault
+	@OptIn(ImplicitReflectionSerializer::class)
 	override fun actionPerformed(pluginManager: PluginManager) {
 		try {
 			val ranks = Utils.loadRanksFromServer(pluginManager)

@@ -22,7 +22,6 @@ class CommandCsGoRank : PluggableCommand {
 		command.help = "Queries the rank of a client using the specified steam id."
 	}
 
-	@kotlinx.serialization.UnstableDefault
 	override fun execute(cmd: ConsoleCommand, invokerId: Int): Boolean {
 		return if (::manager.isInitialized) {
 			manager.getConfiguration("PluginCsGo-SteamTsMapping").apply {

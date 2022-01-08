@@ -4,7 +4,7 @@ group = "com.sapuseven.sneakybot"
 version = "1.0"
 
 plugins {
-    kotlin("jvm") version "1.3.41"
+    kotlin("jvm") version "1.6.10"
 }
 
 repositories {
@@ -21,5 +21,7 @@ tasks.withType<KotlinCompile>().configureEach {
 }
 
 buildscript {
-    configurations.classpath.exclude(group = "com.sapuseven.sneakybot.utils")
+    configurations.classpath {
+        exclude(group = "com.sapuseven.sneakybot.utils")
+    }
 }

@@ -10,8 +10,6 @@ class ServiceRankUpdate : PluggableService {
         // unused
     }
 
-    @kotlinx.serialization.ImplicitReflectionSerializer
-    @kotlinx.serialization.UnstableDefault
     override fun postInit(pluginManager: PluginManager) {
         val timer = TimerRankUpdate()
         pluginManager.addTimer(timer, 10, 60)

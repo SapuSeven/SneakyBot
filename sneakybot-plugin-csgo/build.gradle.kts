@@ -4,7 +4,7 @@ group = "com.sapuseven.sneakybot.plugin"
 version = "1.0"
 
 plugins {
-    kotlin("jvm") version "1.3.70"
+    kotlin("jvm") version "1.6.10"
     kotlin("plugin.serialization") version "1.3.70"
 }
 
@@ -38,7 +38,7 @@ tasks.named<Test>("test") {
 
 val fatJar = task("fatJar", type = Jar::class) {
     baseName = "${project.name}-fat"
-    from(configurations.runtimeClasspath.map { if (it.isDirectory) it else zipTree(it) })
+    from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
     with(tasks["jar"] as CopySpec)
 }
 
