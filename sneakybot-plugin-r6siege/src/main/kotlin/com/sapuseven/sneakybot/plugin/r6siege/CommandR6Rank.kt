@@ -3,7 +3,6 @@ package com.sapuseven.sneakybot.plugin.r6siege
 import com.sapuseven.sneakybot.plugin.r6siege.enums.Platform
 import com.sapuseven.sneakybot.plugin.r6siege.enums.Region
 import com.sapuseven.sneakybot.plugin.r6siege.utils.Api
-import com.sapuseven.sneakybot.plugin.r6siege.utils.PlayerMapping
 import com.sapuseven.sneakybot.plugins.PluggableCommand
 import com.sapuseven.sneakybot.plugins.PluginManager
 import com.sapuseven.sneakybot.utils.Command
@@ -32,14 +31,16 @@ class CommandR6Rank : PluggableCommand {
 						ubisoftUid = cmd.getParam(1)
 					else {
 						val clientUid = manager.getClientById(invokerId).uniqueIdentifier
-						if (PlayerMapping.isTeamspeakUidMapped(clientUid))
-							ubisoftUid = PlayerMapping.getUbisoftUidForTeamspeakUid(clientUid)
-						else {
-							manager.sendMessage(
-								"Your TeamSpeak account is not associated with an Ubisoft account.\n" +
-										"Please link your accounts first using !${CommandR6Link().command.commandName}."
-							)
-							return false
+
+						manager.getConfiguration("PluginR6Siege-TsUbisoftMapping").apply {
+							ubisoftUid = get(clientUid, "")
+							if ((ubisoftUid ?: "").isBlank()) {
+								manager.sendMessage(
+									"Your TeamSpeak account is not associated with an Ubisoft account.\n" +
+											"Please link your accounts first using !${CommandR6Link().command.commandName}."
+								)
+								return false
+							}
 						}
 					}
 

@@ -22,8 +22,8 @@ import com.sapuseven.sneakybot.utils.PluginLoader
 import com.sapuseven.sneakybot.utils.SneakyBotConfig
 import com.xenomachina.argparser.ArgParser
 import com.xenomachina.argparser.mainBody
-import org.ini4j.Ini
 import org.ini4j.IniPreferences
+import org.ini4j.Wini
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.slf4j.impl.SimpleLogger
@@ -74,7 +74,8 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
 	internal val services = ArrayList<PluggableService>()
 
 	internal val timers = ArrayList<TimerThread>()
-	internal lateinit var config: Preferences
+	internal lateinit var config: Wini
+	internal lateinit var configPrefs: Preferences
 	internal lateinit var manager: PluginManagerImpl
 
 	companion object {
@@ -206,6 +207,7 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
 		log.info("Loading configuration...")
 
 		config = loadConfig()
+		configPrefs = IniPreferences(config)
 
 		log.info("Initializing plugins (Phase 1)...")
 
@@ -238,13 +240,13 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
 		}
 	}
 
-	private fun loadConfig(): Preferences {
+	private fun loadConfig(): Wini {
 		val file = File(botConfig.config)
 
 		if (!file.exists())
 			FileOutputStream(file).close() // Create file
 
-		return IniPreferences(Ini(file))
+		return Wini(file)
 	}
 
 	private fun loadBuiltinServices() {
@@ -331,6 +333,9 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
 		log.info("Stopping plugins...")
 		stopPlugins()
 
+		log.info("Saving configuration...")
+		config.store()
+
 		if (::query.isInitialized && query.isConnected) {
 			if (mode == MODE_DIRECT)
 				sendDirectMessage("SneakyBOT is now offline.")
@@ -394,6 +399,6 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
 	internal class TimerThread(val name: String, val thread: Thread)
 
 	fun getConfig(name: String): Preferences {
-		return config.node(name)
+		return configPrefs.node(name)
 	}
 }

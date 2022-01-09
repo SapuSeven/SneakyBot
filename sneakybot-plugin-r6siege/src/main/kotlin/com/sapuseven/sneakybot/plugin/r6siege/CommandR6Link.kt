@@ -2,7 +2,6 @@ package com.sapuseven.sneakybot.plugin.r6siege
 
 import com.sapuseven.sneakybot.plugin.r6siege.enums.Platform
 import com.sapuseven.sneakybot.plugin.r6siege.utils.Api
-import com.sapuseven.sneakybot.plugin.r6siege.utils.PlayerMapping
 import com.sapuseven.sneakybot.plugins.PluggableCommand
 import com.sapuseven.sneakybot.plugins.PluginManager
 import com.sapuseven.sneakybot.utils.Command
@@ -38,8 +37,8 @@ class CommandR6Link : PluggableCommand {
 							manager.sendMessage("Too many results. This is not supported yet.", invokerId)
 						else {
 							val profile = searchResult.first()
-							val clientUid = manager.getClientById(invokerId).uniqueIdentifier
-							PlayerMapping.addPlayerMapping(clientUid to profile.userId)
+							val tsUid = manager.getClientById(invokerId).uniqueIdentifier
+							manager.getConfiguration("PluginR6Siege-TsUbisoftMapping").put(tsUid, profile.userId)
 							manager.sendMessage(
 								"Success! Your TeamSpeak account has been successfully linked to the following Ubisoft account:\n" +
 										"${profile.nameOnPlatform} (${profile.userId})", invokerId
