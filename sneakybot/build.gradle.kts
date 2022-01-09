@@ -15,7 +15,6 @@ repositories {
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation(project(":sneakybot-sdk"))
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.20.0")
     implementation("org.slf4j:slf4j-simple:1.7.2")
     implementation("com.github.theholywaffle:teamspeak3-api:1.2.0")
     implementation("com.xenomachina:kotlin-argparser:2.0.7")

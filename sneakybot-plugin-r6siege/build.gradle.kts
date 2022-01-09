@@ -5,7 +5,7 @@ version = "1.0"
 
 plugins {
     kotlin("jvm") version "1.6.10"
-    kotlin("plugin.serialization") version "1.3.70"
+    kotlin("plugin.serialization") version "1.6.10"
 }
 
 repositories {
@@ -13,8 +13,9 @@ repositories {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.3")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.20.0")
+    implementation("com.github.kittinunf.fuel:fuel:2.3.1")
+    implementation("com.github.kittinunf.fuel:fuel-kotlinx-serialization:2.3.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2")
     compileOnly(kotlin("stdlib-jdk8"))
     compileOnly(project(":sneakybot-sdk"))
     compileOnly("org.slf4j:slf4j-simple:1.7.2")
@@ -38,8 +39,9 @@ tasks.named<Test>("test") {
 
 val fatJar = task("fatJar", type = Jar::class) {
     archiveBaseName.set("${project.name}-fat")
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
     from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
-    with(tasks["jar"] as CopySpec)
+    with(tasks.jar.get() as CopySpec)
 }
 
 val copyPluginJar = task("copyPluginJar", type = Copy::class) {

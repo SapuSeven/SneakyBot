@@ -75,7 +75,7 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
 
 	internal val timers = ArrayList<TimerThread>()
 	internal lateinit var config: Preferences
-	lateinit internal var manager: PluginManagerImpl
+	internal lateinit var manager: PluginManagerImpl
 
 	companion object {
 		const val MODE_DIRECT = 1

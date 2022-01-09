@@ -1,12 +1,12 @@
 package com.sapuseven.sneakybot
 
 import com.github.theholywaffle.teamspeak3.TS3Api
+import com.github.theholywaffle.teamspeak3.api.wrapper.Client
 import com.sapuseven.sneakybot.exceptions.NoSuchClientException
 import com.sapuseven.sneakybot.plugins.PluginManager
 import com.sapuseven.sneakybot.plugins.Timer
 import org.slf4j.LoggerFactory
 import java.io.File
-import java.util.*
 import java.util.prefs.Preferences
 import kotlin.math.min
 
@@ -55,6 +55,9 @@ class PluginManagerImpl internal constructor(private val bot: SneakyBot) : Plugi
         f.parentFile.mkdirs()
         return f
     }
+
+    @Throws(NoSuchClientException::class)
+    override fun getClientById(clientId: Int): Client = bot.getClientById(clientId)
 
     @Throws(NoSuchClientException::class)
     override fun getClientNameById(clientId: Int): String = bot.getClientById(clientId).nickname

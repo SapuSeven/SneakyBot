@@ -1,6 +1,7 @@
 package com.sapuseven.sneakybot.plugins
 
 import com.github.theholywaffle.teamspeak3.TS3Api
+import com.github.theholywaffle.teamspeak3.api.wrapper.Client
 import com.sapuseven.sneakybot.exceptions.NoSuchClientException
 import java.io.File
 import java.util.prefs.Preferences
@@ -36,6 +37,18 @@ interface PluginManager {
     fun getDataFile(name: String): File
 
     /**
+     * Resolve a client id to the corresponding client object.
+     *
+     * The client id can change as clients connect and disconnect!
+     *
+     * @param clientId The id of the client to find.
+     * @return The clients name.
+     * @throws NoSuchClientException When the client cannot be found.
+     */
+    @Throws(NoSuchClientException::class)
+    fun getClientById(clientId: Int): Client
+
+    /**
      * Resolve a client id to the corresponding name.
      *
      * The client id can change as clients connect and disconnect!
@@ -45,6 +58,7 @@ interface PluginManager {
      * @throws NoSuchClientException When the client cannot be found.
      */
     @Throws(NoSuchClientException::class)
+    @Deprecated("Use getClientById(clientId).nickname instead")
     fun getClientNameById(clientId: Int): String
 
     /**
