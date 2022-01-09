@@ -17,8 +17,8 @@ class CommandR6Rank : PluggableCommand {
 
 	init {
 		command.commandName = "r6rank"
-		command.addParameter("<username>")
-		command.help = "Queries the Rainbow Six: Siege rank of yourself if linked. Specify a user to override."
+		command.addParameter("<ubisoftUid>")
+		command.help = "Queries your Rainbow Six: Siege rank if linked. Specify a ubisoft uid to override."
 	}
 
 	override fun execute(cmd: ConsoleCommand, invokerId: Int): Boolean {

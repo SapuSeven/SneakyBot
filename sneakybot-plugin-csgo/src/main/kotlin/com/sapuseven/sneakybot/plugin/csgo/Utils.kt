@@ -8,7 +8,7 @@ import java.net.URL
 import java.util.*
 
 object Utils {
-	lateinit var serverUrl: URL
+	private lateinit var serverUrl: URL
 
 	@Throws(IOException::class)
 	fun loadRanksFromServer(manager: PluginManager): String {
@@ -43,24 +43,29 @@ object Utils {
 
 	fun updateRank(manager: PluginManager, steamId: String, rank: CsGoRank) {
 		manager.api?.let { api ->
-			val uid = manager.getConfiguration("PluginCsGo-SteamTsMapping").get(steamId, "")
-			val client = api.getDatabaseClientByUId(uid)
-			val sgid = getServerGroupForRank(manager, rank.name)
+			manager.getConfiguration("PluginCsGo-TsSteamMapping").apply {
+				this.keys().filter { tsUid ->
+					get(tsUid, "") == steamId
+				}.forEach { tsUid ->
+					val sgid = getServerGroupForRank(manager, rank.name)
+					val tsDbId = api.getDatabaseClientByUId(tsUid).databaseId
 
-			val existingRankGroups = api.getServerGroupsByClientId(client.databaseId).filter { sg ->
-				with(manager.getConfiguration("PluginCsGo-RankGroupMapping")) {
-					keys().any { get(it, "")?.toIntOrNull() == sg.id }
+					val existingRankGroups = api.getServerGroupsByClientId(tsDbId).filter { sg ->
+						with(manager.getConfiguration("PluginCsGo-RankGroupMapping")) {
+							keys().any { get(it, "")?.toIntOrNull() == sg.id }
+						}
+					}
+
+					existingRankGroups.forEach {
+						if (it.id != sgid)
+							api.removeClientFromServerGroup(it.id, tsDbId)
+					}
+
+					if (rank != CsGoRank.NONE)
+						if (existingRankGroups.find { it.id == sgid } == null)
+							api.addClientToServerGroup(sgid, tsDbId)
 				}
 			}
-
-			existingRankGroups.forEach {
-				if (it.id != sgid)
-					api.removeClientFromServerGroup(it.id, client.databaseId)
-			}
-
-			if (rank != CsGoRank.NONE)
-				if (existingRankGroups.find { it.id == sgid } == null)
-					api.addClientToServerGroup(sgid, client.databaseId)
 		}
 	}
 

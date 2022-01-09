@@ -20,8 +20,8 @@ class CommandCsGoConfigTest : PluggableCommand {
 
     override fun execute(cmd: ConsoleCommand, invokerId: Int): Boolean {
         return if (::manager.isInitialized) {
-            manager.getConfiguration("PluginCsGo-SteamTsMapping").apply {
-                manager.sendMessage("Steam <-> Ts Mapping:\n" + this.keys().joinToString("\n") {
+            manager.getConfiguration("PluginCsGo-TsSteamMapping").apply {
+                manager.sendMessage("Ts <-> Steam Mapping:\n" + this.keys().joinToString("\n") {
                     "$it: ${this.get(it, "")}"
                 }, invokerId)
             }

@@ -4,6 +4,7 @@ import com.sapuseven.sneakybot.plugins.PluggableCommand
 import com.sapuseven.sneakybot.plugins.PluginManager
 import com.sapuseven.sneakybot.utils.Command
 import com.sapuseven.sneakybot.utils.ConsoleCommand
+import kotlinx.serialization.UnstableDefault
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.parseMap
 import org.slf4j.LoggerFactory
@@ -19,26 +20,45 @@ class CommandCsGoRank : PluggableCommand {
 	init {
 		command.commandName = "csgorank"
 		command.addParameter("[steam_id]")
-		command.help = "Queries the rank of a client using the specified steam id."
+		command.help = "Queries your rank if linked. Specify a Steam id to override."
 	}
 
 	override fun execute(cmd: ConsoleCommand, invokerId: Int): Boolean {
 		return if (::manager.isInitialized) {
-			manager.getConfiguration("PluginCsGo-SteamTsMapping").apply {
-				manager.api?.let { api ->
-					val steamId = cmd.getParam(1)
-					val uid = get(steamId, "")
-					val client = api.getClientByUId(uid)
-					val rank = getRankForSteamId(steamId) ?: CsGoRank.NONE
-					val sgid = getServerGroupForRank(rank.name)
+			var steamId: String? = null
 
-					manager.sendMessage(
-						"${client?.nickname} is rank ${rank.rankId} (${rank.name}) and should have server group $sgid",
-						invokerId
-					)
+			if (cmd.paramCount() > 1)
+				steamId = cmd.getParam(1)
+			else {
+				val clientUid = manager.getClientById(invokerId).uniqueIdentifier
 
-					Utils.updateRank(manager, steamId, rank)
+				manager.getConfiguration("PluginCsGo-TsSteamMapping").apply {
+					steamId = get(clientUid, "")
+					if ((steamId ?: "").isBlank()) {
+						manager.sendMessage(
+							"Your TeamSpeak account is not associated with a Steam account."
+						)
+						return false
+					}
 				}
+			}
+
+			steamId?.let { id ->
+				val rank = getRankForSteamId(id)?.let { rank ->
+					val sgid = getServerGroupForRank(rank.name)
+					manager.sendMessage("Rank: ${rank.name} (server group $sgid)")
+				} ?: {
+					manager.sendMessage(
+						"Your rank could not be determined.\n" +
+								"Please contact the server administrator."
+					)
+				}
+			} ?: run {
+				manager.sendMessage(
+					"Your TeamSpeak account could not be mapped to your Steam account.\n" +
+							"Please contact the server administrator."
+				) // This serves as a fallback error message
+				return false
 			}
 			true
 		} else {
@@ -47,7 +67,7 @@ class CommandCsGoRank : PluggableCommand {
 		}
 	}
 
-	@kotlinx.serialization.UnstableDefault
+	@OptIn(UnstableDefault::class)
 	private fun getRankForSteamId(steamId: String): CsGoRank? {
 		val ranks = Utils.loadRanksFromServer(manager)
 
