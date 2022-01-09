@@ -3,15 +3,22 @@ package com.sapuseven.sneakybot.utils
 class Command {
     lateinit var commandName: String
     val parameters: ArrayList<Parameter> = ArrayList()
-    var help: String = ""
+    var help: String = "(No help text found.)"
 
-    @Suppress("UNUSED_PARAMETER")
+    companion object {
+        private const val PARAMETER_PATTERN = "^<(.*)>$|^\\[(.*)]$"
+    }
+
     fun addParameter(parameter: String) {
-        // This gets implemented by the SneakyBOT client
+        require(parameter.matches(PARAMETER_PATTERN.toRegex())) { "Invalid parameter format: $parameter!" }
+        val p = Parameter()
+        p.parameter = parameter.replace(PARAMETER_PATTERN.toRegex(), "$1$2")
+        p.isRequired = parameter[0] == '['
+        parameters.add(p)
     }
 
     inner class Parameter {
-        lateinit var parameter: String
+        var parameter: String? = null
         var isRequired: Boolean = false
     }
 }

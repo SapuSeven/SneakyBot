@@ -19,9 +19,3 @@ dependencies {
 tasks.withType<KotlinCompile>().configureEach {
     kotlinOptions.jvmTarget = "1.8"
 }
-
-buildscript {
-    configurations.classpath {
-        exclude(group = "com.sapuseven.sneakybot.utils")
-    }
-}

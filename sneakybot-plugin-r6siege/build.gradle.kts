@@ -56,11 +56,11 @@ val deletePluginJar = task("deletePluginJar", type = Delete::class) {
 }
 
 tasks {
-    "build" {
+    build {
         dependsOn(fatJar)
         dependsOn(copyPluginJar)
     }
-    "clean" {
+    clean {
         dependsOn(deletePluginJar)
     }
 }

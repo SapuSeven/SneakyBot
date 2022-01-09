@@ -4,27 +4,27 @@ group = "com.sapuseven.sneakybot"
 version = "1.0"
 
 plugins {
-    kotlin("jvm") version "1.6.10"
-    application
+	kotlin("jvm") version "1.6.10"
+	application
 }
 
 repositories {
-    mavenCentral()
+	mavenCentral()
 }
 
 dependencies {
-    implementation(kotlin("stdlib-jdk8"))
-    implementation(project(":sneakybot-sdk"))
-    implementation("org.slf4j:slf4j-simple:1.7.2")
-    implementation("com.github.theholywaffle:teamspeak3-api:1.2.0")
-    implementation("com.xenomachina:kotlin-argparser:2.0.7")
-    implementation("org.ini4j:ini4j:0.5.1")
+	implementation(kotlin("stdlib-jdk8"))
+	implementation(project(":sneakybot-sdk"))
+	implementation("org.slf4j:slf4j-simple:1.7.2")
+	implementation("com.github.theholywaffle:teamspeak3-api:1.2.0")
+	implementation("com.xenomachina:kotlin-argparser:2.0.7")
+	implementation("org.ini4j:ini4j:0.5.1")
 }
 
 tasks.withType<KotlinCompile>().configureEach {
-    kotlinOptions.jvmTarget = "1.8"
+	kotlinOptions.jvmTarget = "1.8"
 }
 
 application {
-    mainClass.set("com.sapuseven.sneakybot.SneakyBot" + "Kt")
+	mainClass.set("com.sapuseven.sneakybot.SneakyBot" + "Kt")
 }
