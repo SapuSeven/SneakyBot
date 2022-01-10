@@ -34,8 +34,14 @@ class Api {
 		}
 	}
 
-	fun loadPlayerRanks(uid: String, platform: Platform, region: Region, season: Int = -1): Map<String, Rank> {
-		val (_, _, result) = authenticatedGet("https://public-ubiservices.ubi.com/v1/spaces/${platform.spaceId}/sandboxes/${platform.url}/r6karma/players?board_id=pvp_ranked&profile_ids=$uid&region_id=${region.regionName}&season_id=$season")
+	fun loadPlayerRanks(uids: List<String>, platform: Platform, region: Region, season: Int = -1): Map<String, Rank> {
+		val (_, _, result) = authenticatedGet(
+			"https://public-ubiservices.ubi.com/v1/spaces/${platform.spaceId}/sandboxes/${platform.url}/r6karma/players?board_id=pvp_ranked&profile_ids=${
+				uids.joinToString(
+					","
+				)
+			}&region_id=${region.regionName}&season_id=$season"
+		)
 			.responseObject<PlayerInfoModel>()
 
 		when (result) {

@@ -45,7 +45,7 @@ class CommandR6Rank : PluggableCommand {
 					}
 
 					ubisoftUid?.let { uid ->
-						val rank = loadPlayerRanks(uid, Platform.UPLAY, Region.EU)[ubisoftUid]
+						val rank = loadPlayerRanks(listOf(uid), Platform.UPLAY, Region.EU)[uid]
 						manager.sendMessage("Rank: ${rank?.displayName}")
 					} ?: manager.sendMessage(
 						"Your TeamSpeak account could not be mapped to your Ubisoft account.\n" +
