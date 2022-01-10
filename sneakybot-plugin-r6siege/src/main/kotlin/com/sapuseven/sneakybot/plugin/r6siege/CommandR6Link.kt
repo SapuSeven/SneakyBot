@@ -39,6 +39,7 @@ class CommandR6Link : PluggableCommand {
 							val profile = searchResult.first()
 							val tsUid = manager.getClientById(invokerId).uniqueIdentifier.trimEnd('=')
 							manager.getConfiguration("PluginR6Siege-TsUbisoftMapping").put(tsUid, profile.userId)
+							log.info("TeamSpeak user $tsUid has been linked to Ubisoft account ${profile.nameOnPlatform} (${profile.userId}).")
 							manager.sendMessage(
 								"Success! Your TeamSpeak account has been successfully linked to the following Ubisoft account:\n" +
 										"${profile.nameOnPlatform} (${profile.userId})", invokerId
@@ -47,6 +48,7 @@ class CommandR6Link : PluggableCommand {
 						}
 					}
 				} catch (e: Exception) {
+					log.error("Failed to link Ubisoft account (${cmd.getParam(1)})", e)
 					manager.sendMessage(
 						"There has been an error linking your account. Please contact the server administrator.",
 						invokerId
