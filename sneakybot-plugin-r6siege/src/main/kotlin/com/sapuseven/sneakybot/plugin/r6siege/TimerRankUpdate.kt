@@ -65,7 +65,7 @@ class TimerRankUpdate : Timer {
 
 				existingRankGroups.forEach {
 					if (it.id != sgid) {
-						log.info("Removing $tsUid from old rank server group $sgid")
+						log.info("Removing $tsUid from old rank server group ${it.id}")
 						api.removeClientFromServerGroup(it.id, tsDbId)
 					}
 				}
