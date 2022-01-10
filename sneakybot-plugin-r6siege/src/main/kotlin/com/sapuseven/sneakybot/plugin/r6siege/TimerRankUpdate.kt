@@ -12,20 +12,28 @@ import java.io.IOException
 
 class TimerRankUpdate : Timer {
 	private val log = LoggerFactory.getLogger(TimerRankUpdate::class.java)
-	private val rankCache: MutableMap<String, Rank> = mutableMapOf()
 
 	override fun actionPerformed(pluginManager: PluginManager) {
 		try {
 			pluginManager.getConfiguration("PluginR6Siege-Auth").apply {
 				Api(get("email", ""), get("password", "")).apply {
+					// Load mapping
 					val tsUidToUbisoftUidMapping = pluginManager.getConfiguration("PluginR6Siege-TsUbisoftMapping")
+
+					// Filter mapping to only include currently online users
 					val onlineTsUidToUbisoftUidMapping = pluginManager.api?.clients?.map { client ->
 						val tsUid = client.uniqueIdentifier.trimEnd('=')
 						tsUid to tsUidToUbisoftUidMapping.get(tsUid, "")
 					}?.filter { it.second.isNotBlank() } ?: emptyList()
 
-					val onlineUbisoftUids = onlineTsUidToUbisoftUidMapping.map { it.second }.distinct()
-					val ubisoftUidToRank = loadPlayerRanks(onlineUbisoftUids, Platform.UPLAY, Region.EU)
+					// Load the rank for each online user
+					val ubisoftUidToRank = loadPlayerRanks(
+						onlineTsUidToUbisoftUidMapping.map { it.second }.distinct(),
+						Platform.UPLAY,
+						Region.EU
+					)
+
+					// Update rank groups for each online user
 					onlineTsUidToUbisoftUidMapping.map { tsUidToUbisoftUid -> tsUidToUbisoftUid.first to ubisoftUidToRank[tsUidToUbisoftUid.second] }
 						.forEach { tsUidToRank ->
 							updateRank(pluginManager, tsUidToRank.first, tsUidToRank.second ?: Rank.UNRANKED)
