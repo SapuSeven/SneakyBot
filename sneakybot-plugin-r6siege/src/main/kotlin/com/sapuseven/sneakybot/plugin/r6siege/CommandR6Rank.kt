@@ -30,7 +30,7 @@ class CommandR6Rank : PluggableCommand {
 					if (cmd.paramCount() > 1)
 						ubisoftUid = cmd.getParam(1)
 					else {
-						val clientUid = manager.getClientById(invokerId).uniqueIdentifier
+						val clientUid = manager.getClientById(invokerId).uniqueIdentifier.trimEnd('=')
 
 						manager.getConfiguration("PluginR6Siege-TsUbisoftMapping").apply {
 							ubisoftUid = get(clientUid, "")

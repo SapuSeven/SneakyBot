@@ -37,7 +37,7 @@ class CommandR6Link : PluggableCommand {
 							manager.sendMessage("Too many results. This is not supported yet.", invokerId)
 						else {
 							val profile = searchResult.first()
-							val tsUid = manager.getClientById(invokerId).uniqueIdentifier
+							val tsUid = manager.getClientById(invokerId).uniqueIdentifier.trimEnd('=')
 							manager.getConfiguration("PluginR6Siege-TsUbisoftMapping").put(tsUid, profile.userId)
 							manager.sendMessage(
 								"Success! Your TeamSpeak account has been successfully linked to the following Ubisoft account:\n" +
