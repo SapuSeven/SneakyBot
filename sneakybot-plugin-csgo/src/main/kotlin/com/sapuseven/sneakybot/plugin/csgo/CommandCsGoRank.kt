@@ -4,13 +4,11 @@ import com.sapuseven.sneakybot.plugins.PluggableCommand
 import com.sapuseven.sneakybot.plugins.PluginManager
 import com.sapuseven.sneakybot.utils.Command
 import com.sapuseven.sneakybot.utils.ConsoleCommand
-import kotlinx.serialization.UnstableDefault
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.parseMap
 import org.slf4j.LoggerFactory
 
 
-@kotlinx.serialization.ImplicitReflectionSerializer
 class CommandCsGoRank : PluggableCommand {
 	private lateinit var manager: PluginManager
 	private val log = LoggerFactory.getLogger(CommandCsGoRank::class.java)
@@ -30,7 +28,7 @@ class CommandCsGoRank : PluggableCommand {
 			if (cmd.paramCount() > 1)
 				steamId = cmd.getParam(1)
 			else {
-				val clientUid = manager.getClientById(invokerId).uniqueIdentifier
+				val clientUid = manager.getClientById(invokerId).uniqueIdentifier.trimEnd('=')
 
 				manager.getConfiguration("PluginCsGo-TsSteamMapping").apply {
 					steamId = get(clientUid, "")
@@ -67,11 +65,10 @@ class CommandCsGoRank : PluggableCommand {
 		}
 	}
 
-	@OptIn(UnstableDefault::class)
 	private fun getRankForSteamId(steamId: String): CsGoRank? {
 		val ranks = Utils.loadRanksFromServer(manager)
 
-		val rankId = Json.parseMap<String, Int>(ranks)[steamId]
+		val rankId = Json.decodeFromString<Map<String, Int>>(ranks)[steamId]
 
 		return CsGoRank.values().find { it.rankId == rankId }
 	}
