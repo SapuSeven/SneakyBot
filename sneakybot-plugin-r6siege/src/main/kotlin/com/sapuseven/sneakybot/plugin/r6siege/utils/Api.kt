@@ -35,6 +35,8 @@ class Api {
 	}
 
 	fun loadPlayerRanks(uids: List<String>, platform: Platform, region: Region, season: Int = -1): Map<String, Rank> {
+		if (uids.isEmpty()) return emptyMap()
+
 		val (_, _, result) = authenticatedGet(
 			"https://public-ubiservices.ubi.com/v1/spaces/${platform.spaceId}/sandboxes/${platform.url}/r6karma/players?board_id=pvp_ranked&profile_ids=${
 				uids.joinToString(

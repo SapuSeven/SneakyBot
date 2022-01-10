@@ -48,7 +48,9 @@ object Utils {
 					get(tsUid, "") == steamId
 				}.forEach { tsUid ->
 					val sgid = getServerGroupForRank(manager, rank.name)
-					val tsDbId = api.getDatabaseClientByUId(tsUid).databaseId
+					val tsDbId =
+						api.clients.find { client -> client.uniqueIdentifier.trimEnd('=') == tsUid }?.databaseId
+							?: return@forEach
 
 					val existingRankGroups = api.getServerGroupsByClientId(tsDbId).filter { sg ->
 						with(manager.getConfiguration("PluginCsGo-RankGroupMapping")) {

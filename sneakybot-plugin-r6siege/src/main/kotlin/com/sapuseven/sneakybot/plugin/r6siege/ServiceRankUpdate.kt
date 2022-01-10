@@ -1,6 +1,7 @@
 package com.sapuseven.sneakybot.plugin.r6siege
 
 import com.github.theholywaffle.teamspeak3.api.event.BaseEvent
+import com.github.theholywaffle.teamspeak3.api.event.ClientJoinEvent
 import com.sapuseven.sneakybot.plugins.PluggableService
 import com.sapuseven.sneakybot.plugins.PluginManager
 import com.sapuseven.sneakybot.utils.ConsoleCommand
@@ -20,7 +21,9 @@ class ServiceRankUpdate : PluggableService {
     }
 
     override fun onEventReceived(e: BaseEvent) {
-        // unused
+        if (e is ClientJoinEvent) {
+            // TODO: On-demand rank update
+        }
     }
 
     override fun onCommandExecuted(cmd: ConsoleCommand, invokerId: Int) {

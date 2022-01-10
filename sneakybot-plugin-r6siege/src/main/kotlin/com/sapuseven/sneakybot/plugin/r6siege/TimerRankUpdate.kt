@@ -18,15 +18,18 @@ class TimerRankUpdate : Timer {
 		try {
 			pluginManager.getConfiguration("PluginR6Siege-Auth").apply {
 				Api(get("email", ""), get("password", "")).apply {
-					val ubisoftUids = pluginManager.getConfiguration("PluginR6Siege-TsUbisoftMapping").run {
-						keys().map { get(it, "") }.distinct()
-					}
+					val tsUidToUbisoftUidMapping = pluginManager.getConfiguration("PluginR6Siege-TsUbisoftMapping")
+					val onlineTsUidToUbisoftUidMapping = pluginManager.api?.clients?.map { client ->
+						val tsUid = client.uniqueIdentifier.trimEnd('=')
+						tsUid to tsUidToUbisoftUidMapping.get(tsUid, "")
+					}?.filter { it.second.isNotBlank() } ?: emptyList()
 
-					loadPlayerRanks(ubisoftUids, Platform.UPLAY, Region.EU).forEach { rank ->
-						if (rankCache[rank.key] != rank.value)
-							updateRank(pluginManager, rank.key, rank.value)
-						rankCache[rank.key] = rank.value
-					}
+					val onlineUbisoftUids = onlineTsUidToUbisoftUidMapping.map { it.second }.distinct()
+					val ubisoftUidToRank = loadPlayerRanks(onlineUbisoftUids, Platform.UPLAY, Region.EU)
+					onlineTsUidToUbisoftUidMapping.map { tsUidToUbisoftUid -> tsUidToUbisoftUid.first to ubisoftUidToRank[tsUidToUbisoftUid.second] }
+						.forEach { tsUidToRank ->
+							updateRank(pluginManager, tsUidToRank.first, tsUidToRank.second ?: Rank.UNRANKED)
+						}
 				}
 			}
 		} catch (e: IOException) {
@@ -36,6 +39,31 @@ class TimerRankUpdate : Timer {
 	}
 
 	private fun updateRank(pluginManager: PluginManager, tsUid: String, rank: Rank) {
-		log.debug("TeamSpeak user $tsUid should now be ${rank.displayName}")
+		pluginManager.api?.let { api ->
+			pluginManager.getConfiguration("PluginR6Siege-TsSteamMapping").apply {
+				val sgid = getServerGroupForRank(pluginManager, rank)
+				val tsDbId =
+					api.clients.find { client -> client.uniqueIdentifier.trimEnd('=') == tsUid }?.databaseId
+						?: return
+
+				val existingRankGroups = api.getServerGroupsByClientId(tsDbId).filter { sg ->
+					with(pluginManager.getConfiguration("PluginR6Siege-RankGroupMapping")) {
+						keys().any { get(it, "")?.toIntOrNull() == sg.id }
+					}
+				}
+
+				existingRankGroups.forEach {
+					if (it.id != sgid)
+						api.removeClientFromServerGroup(it.id, tsDbId)
+				}
+
+				if (existingRankGroups.find { it.id == sgid } == null)
+					api.addClientToServerGroup(sgid, tsDbId)
+			}
+		}
+	}
+
+	private fun getServerGroupForRank(pluginManager: PluginManager, rank: Rank): Int {
+		return pluginManager.getConfiguration("PluginR6Siege-RankGroupMapping").getInt(rank.name, 0)
 	}
 }
