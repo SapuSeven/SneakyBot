@@ -14,6 +14,7 @@ class TimerRankUpdate : Timer {
 	private val log = LoggerFactory.getLogger(TimerRankUpdate::class.java)
 
 	override fun actionPerformed(pluginManager: PluginManager) {
+		log.debug("Starting R6Siege rank update")
 		try {
 			pluginManager.getConfiguration("PluginR6Siege-Auth").apply {
 				Api(get("email", ""), get("password", "")).apply {
@@ -41,12 +42,14 @@ class TimerRankUpdate : Timer {
 				}
 			}
 		} catch (e: IOException) {
+			log.error("Failed to update R6Siege ranks", e)
 			pluginManager.sendMessage("An error occurred while trying to connect to the rank provider server (${e.javaClass.simpleName}: ${e.message}).")
 			throw e
 		}
 	}
 
 	private fun updateRank(pluginManager: PluginManager, tsUid: String, rank: Rank) {
+		log.debug("New rank received for $tsUid: ${rank.name}")
 		pluginManager.api?.let { api ->
 			pluginManager.getConfiguration("PluginR6Siege-TsSteamMapping").apply {
 				val sgid = getServerGroupForRank(pluginManager, rank)
@@ -61,12 +64,16 @@ class TimerRankUpdate : Timer {
 				}
 
 				existingRankGroups.forEach {
-					if (it.id != sgid)
+					if (it.id != sgid) {
+						log.info("Removing $tsUid from old rank server group $sgid")
 						api.removeClientFromServerGroup(it.id, tsDbId)
+					}
 				}
 
-				if (existingRankGroups.find { it.id == sgid } == null)
+				if (existingRankGroups.find { it.id == sgid } == null) {
+					log.info("Adding $tsUid to new rank server group $sgid")
 					api.addClientToServerGroup(sgid, tsDbId)
+				}
 			}
 		}
 	}
