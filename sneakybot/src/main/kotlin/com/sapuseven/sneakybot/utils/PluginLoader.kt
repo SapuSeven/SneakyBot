@@ -7,6 +7,7 @@ import java.io.FileInputStream
 import java.io.IOException
 import java.lang.reflect.InvocationTargetException
 import java.net.URLClassLoader
+import java.util.*
 import java.util.jar.JarEntry
 import java.util.jar.JarInputStream
 
@@ -70,7 +71,9 @@ object PluginLoader {
 		val jarInputStream = JarInputStream(FileInputStream(jar))
 		var ent: JarEntry? = jarInputStream.nextJarEntry
 		while (ent != null) {
-			if (ent.name.toLowerCase().endsWith(".class"))
+			if (!ent.name.startsWith("META-INF")
+				&& ent.name.lowercase(Locale.getDefault()).endsWith(".class")
+			)
 				try {
 					val cls = cl.loadClass(ent.name.substring(0, ent.name.length - 6).replace('/', '.'))
 					if (isPluggableClass(cls, pluginClass))
@@ -95,6 +98,6 @@ object PluginLoader {
 	}
 
 	private class JARFileFilter : FileFilter {
-		override fun accept(f: File): Boolean = f.name.toLowerCase().endsWith(".jar")
+		override fun accept(f: File): Boolean = f.name.lowercase(Locale.getDefault()).endsWith(".jar")
 	}
 }
