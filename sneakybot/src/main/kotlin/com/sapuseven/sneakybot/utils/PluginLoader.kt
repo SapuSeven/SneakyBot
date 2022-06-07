@@ -79,9 +79,9 @@ object PluginLoader {
 					if (isPluggableClass(cls, pluginClass))
 						classes.add(cls)
 				} catch (e: Exception) {
-					log.error("Can't load Class ${ent.name}: ${e.message}")
+					log.error("Can't load Class ${ent.name}: $e")
 				} catch (e: Error) {
-					log.error("Can't load Class ${ent.name}: ${e.message}")
+					log.error("Can't load Class ${ent.name}: $e")
 				}
 			ent = jarInputStream.nextJarEntry
 		}

@@ -285,8 +285,12 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
 
 	internal fun stopPlugins() {
 		for (p in services + builtinServices) {
-			log.debug("Stopping: " + p.javaClass.simpleName)
-			p.stop(manager)
+			try {
+				log.debug("Stopping: " + p.javaClass.simpleName)
+				p.stop(manager)
+			} catch (e: Exception) {
+				log.error("Error stopping ${p.javaClass.simpleName}: $e")
+			}
 		}
 
 		for (t in timers)
@@ -333,8 +337,10 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
 		log.info("Stopping plugins...")
 		stopPlugins()
 
-		log.info("Saving configuration...")
-		config.store()
+		if (this::config.isInitialized) {
+			log.info("Saving configuration...")
+			config.store()
+		}
 
 		if (::query.isInitialized && query.isConnected) {
 			if (mode == MODE_DIRECT)
