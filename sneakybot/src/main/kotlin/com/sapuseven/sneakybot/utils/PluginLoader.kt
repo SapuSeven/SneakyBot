@@ -22,6 +22,8 @@ object PluginLoader {
 		try {
 			pluginJars = pluginDir.listFiles(JARFileFilter()) ?: emptyArray()
 			classLoader = URLClassLoader(pluginJars.map { it.toURI().toURL() }.toTypedArray())
+
+			Thread.currentThread().contextClassLoader = classLoader
 		} catch (e: SecurityException) {
 			log.error("Plugin directory is unreadable! (SecurityException: ${e.message})")
 			return emptyList()
