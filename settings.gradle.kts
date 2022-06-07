@@ -2,6 +2,7 @@ rootProject.name = "sneakybot-root"
 
 include("sneakybot")
 include("sneakybot-sdk")
+include("sneakybot-plugin-accounts")
 include("sneakybot-plugin-autoaway")
 include("sneakybot-plugin-autokick")
 include("sneakybot-plugin-channels")
