@@ -37,6 +37,7 @@ val fatJar = task("fatJar", type = Jar::class) {
     archiveBaseName.set("${project.name}-fat")
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
     from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
+    exclude("META-INF/*", "*.html")
     with(tasks.jar.get() as CopySpec)
 }
 
