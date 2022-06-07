@@ -6,6 +6,8 @@ import com.github.theholywaffle.teamspeak3.api.event.BaseEvent
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException
 import com.github.theholywaffle.teamspeak3.api.wrapper.Client
 import com.sapuseven.sneakybot.plugin.accounts.ApiConstants.ERROR_API_UNREACHABLE
+import com.sapuseven.sneakybot.plugin.accounts.ApiConstants.ERROR_LINK_CODE_INVALID
+import com.sapuseven.sneakybot.plugin.accounts.ApiConstants.ERROR_LINK_TS_MISSING
 import com.sapuseven.sneakybot.plugin.accounts.ApiConstants.ERROR_NOT_FOUND
 import com.sapuseven.sneakybot.plugin.accounts.ApiConstants.ERROR_RATE_LIMIT
 import com.sapuseven.sneakybot.plugin.accounts.ApiConstants.ERROR_UNKNOWN
@@ -105,18 +107,26 @@ class ServiceApi : PluggableService {
 		app.get("/invite/<id>") { ctx ->
 			if (rateLimit(ctx)) return@get
 
-			when (ctx.queryParam("platform")) {
-				"steam" -> {
-					val code = accounts[ctx.pathParam("id")]?.generateCode()
+			val platform = when (ctx.queryParam("platform")) {
+				PLATFORM_STEAM -> PLATFORM_STEAM
+				else -> PLATFORM_TS
+			}
+
+			val accountId = generateAccountId(platform, ctx.pathParam("id"))
+			var code: String? = null
+
+			when (platform) {
+				PLATFORM_STEAM -> {
+					code = accounts[ctx.pathParam("id")]?.generateCode()
 
 					val (_, _, _) = Fuel.post(steamApiRoot + steamApiInvite + ctx.pathParam("id"))
 						.body("Hi there! Please use the following code to verify your Steam account: $code")
 						.response()
 				}
-				else -> try {
+				PLATFORM_TS -> try {
 					pluginManager.api?.let { api ->
 						val client = api.getClientByUId(ctx.pathParam("id"))
-						val code = accounts[client.uniqueIdentifier]?.generateCode()
+						code = accounts[client.uniqueIdentifier]?.generateCode()
 
 						if (code == null) {
 							ctx.json(ApiError(ERROR_UNKNOWN))
@@ -132,28 +142,44 @@ class ServiceApi : PluggableService {
 					ctx.json(ApiError(ERROR_NOT_FOUND))
 				}
 			}
+
+			code?.let {
+				pluginManager.getConfiguration("PluginAccounts-AccountCodes").put(accountId, code)
+			}
 		}
 
-		app.post("/link/<uuid>") { ctx ->
+		app.post("/link") { ctx ->
 			if (rateLimit(ctx)) return@post
 
-			try {
-				pluginManager.api?.let { api ->
-					val client = api.getClientByUId(ctx.pathParam("uuid"))
-					val code = accounts[client.uniqueIdentifier]?.generateCode()
+			val allAccounts = ctx.bodyAsClass<Array<ApiAccount>>()
+			val mainAccount = allAccounts.find { a -> a.platform == PLATFORM_TS }
+			val otherAccounts = allAccounts.filter { a -> a.platform != PLATFORM_TS }
 
-					if (code == null) {
-						ctx.json(ApiError(ERROR_UNKNOWN))
+			// Check if TS account is present
+			if (mainAccount == null) {
+				ctx.json(ApiError(ERROR_LINK_TS_MISSING))
+				return@post
+			}
+
+			// Check if any codes mismatch
+			pluginManager.getConfiguration("PluginAccounts-AccountCodes").let { storedCodes ->
+				allAccounts.forEach { a ->
+					val expectedCode = storedCodes.get(generateAccountId(a.platform, a.id), "")
+					if (expectedCode.isEmpty() || a.code != expectedCode) {
+						ctx.json(ApiError(ERROR_LINK_CODE_INVALID))
 						return@post
 					}
-
-					api.sendPrivateMessage(
-						client.id,
-						"Hi there! Please use the following code to verify your TeamSpeak account: $code"
-					)
 				}
-			} catch (e: TS3CommandFailedException) {
-				ctx.json(ApiError(ERROR_NOT_FOUND))
+			}
+
+			pluginManager.getConfiguration("PluginAccounts-AccountLinks").let { accountLinks ->
+				val key = generateAccountId(mainAccount.platform, mainAccount.id)
+				accountLinks.get(key, "").split(",").toMutableSet().apply {
+					remove("")
+					addAll(otherAccounts.map { a -> generateAccountId(a.platform, a.id).replace(",", "") })
+					accountLinks.put(key, joinToString(","))
+					ctx.status(200)
+				}
 			}
 		}
 	}
@@ -166,6 +192,10 @@ class ServiceApi : PluggableService {
 			ctx.json(ApiError(ERROR_RATE_LIMIT))
 			true
 		}
+	}
+
+	private fun generateAccountId(platform: String, id: String): String {
+		return platform + '-' + id.replace("=", "")
 	}
 
 	override fun stop(pluginManager: PluginManager) {
