@@ -43,33 +43,42 @@ object Utils {
 
 	fun updateRank(manager: PluginManager, steamId: String, rank: CsGoRank) {
 		manager.api?.let { api ->
-			manager.getConfiguration("PluginCsGo-TsSteamMapping").apply {
-				this.keys().filter { tsUid ->
-					get(tsUid, "") == steamId
-				}.forEach { tsUid ->
-					val sgid = getServerGroupForRank(manager, rank.name)
-					val tsDbId =
-						api.clients.find { client -> client.uniqueIdentifier.trimEnd('=') == tsUid }?.databaseId
-							?: return@forEach
+			getTsUidsForSteamId(manager, steamId).forEach { tsUid ->
+				val sgid = getServerGroupForRank(manager, rank.name)
+				val tsDbId =
+					api.clients.find { client -> client.uniqueIdentifier.trimEnd('=') == tsUid }?.databaseId
+						?: return@forEach
 
-					val existingRankGroups = api.getServerGroupsByClientId(tsDbId).filter { sg ->
-						with(manager.getConfiguration("PluginCsGo-RankGroupMapping")) {
-							keys().any { get(it, "")?.toIntOrNull() == sg.id }
-						}
+				val existingRankGroups = api.getServerGroupsByClientId(tsDbId).filter { sg ->
+					with(manager.getConfiguration("PluginCsGo-RankGroupMapping")) {
+						keys().any { get(it, "")?.toIntOrNull() == sg.id }
 					}
-
-					existingRankGroups.forEach {
-						if (it.id != sgid)
-							api.removeClientFromServerGroup(it.id, tsDbId)
-					}
-
-					if (rank != CsGoRank.NONE)
-						if (existingRankGroups.find { it.id == sgid } == null)
-							api.addClientToServerGroup(sgid, tsDbId)
 				}
+
+				existingRankGroups.forEach {
+					if (it.id != sgid)
+						api.removeClientFromServerGroup(it.id, tsDbId)
+				}
+
+				if (rank != CsGoRank.NONE)
+					if (existingRankGroups.find { it.id == sgid } == null)
+						api.addClientToServerGroup(sgid, tsDbId)
 			}
 		}
 	}
+
+	fun getTsUidsForSteamId(manager: PluginManager, steamId: String): List<String> = listOf(
+		manager.getConfiguration("PluginAccounts-AccountLinks").run {
+			keys().filter { tsUid ->
+				get(tsUid, "").split(',').filter { i -> i.startsWith("steam-") }.contains("steam-$steamId")
+			}.map { i -> i.replaceFirst("ts-", "") }
+		},
+		manager.getConfiguration("PluginCsGo-TsSteamMapping").run {
+			keys().filter { tsUid ->
+				get(tsUid, "") == steamId
+			}
+		}
+	).flatten().distinct()
 
 	private fun getServerGroupForRank(manager: PluginManager, rank: String): Int {
 		return manager.getConfiguration("PluginCsGo-RankGroupMapping").getInt(rank, 0)

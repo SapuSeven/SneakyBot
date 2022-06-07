@@ -10,11 +10,19 @@ import java.io.IOException
 class TimerRankUpdate : Timer {
 	private val rankCache: MutableMap<String, CsGoRank> = mutableMapOf()
 
+	private val linkedAccounts: MutableMap<String, String> = mutableMapOf()
+
 	override fun actionPerformed(pluginManager: PluginManager) {
 		try {
 			val ranks = Utils.loadRanksFromServer(pluginManager)
 
 			Json.decodeFromString<Map<String, Int>>(ranks).forEach { rank ->
+				// Watch for changes of linked accounts and force a rank update if linked accounts changed
+				val tsUids = Utils.getTsUidsForSteamId(pluginManager, rank.key).joinToString()
+				if (linkedAccounts[rank.key] != tsUids)
+					rankCache.remove(rank.key)
+				linkedAccounts[rank.key] = tsUids
+
 				val rankValue = CsGoRank.values().find { it.rankId == rank.value } ?: CsGoRank.NONE
 				if (rankCache[rank.key] != rankValue)
 					Utils.updateRank(pluginManager, rank.key, rankValue)
