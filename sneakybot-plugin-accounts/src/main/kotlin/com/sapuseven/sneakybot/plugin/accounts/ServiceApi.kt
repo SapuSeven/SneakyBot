@@ -177,7 +177,8 @@ class ServiceApi : PluggableService {
 				accountLinks.get(key, "").split(",").toMutableSet().apply {
 					remove("")
 					addAll(otherAccounts.map { a -> generateAccountId(a.platform, a.id).replace(",", "") })
-					accountLinks.put(key, joinToString(","))
+					if (size > 0)
+						accountLinks.put(key, joinToString(","))
 					ctx.status(200)
 				}
 			}
