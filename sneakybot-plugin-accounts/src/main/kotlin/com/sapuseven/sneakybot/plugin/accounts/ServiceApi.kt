@@ -1,21 +1,30 @@
 package com.sapuseven.sneakybot.plugin.accounts
 
 import com.github.theholywaffle.teamspeak3.api.event.BaseEvent
+import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException
+import com.github.theholywaffle.teamspeak3.api.wrapper.Client
 import com.sapuseven.sneakybot.plugin.accounts.ApiConstants.ERROR_NOT_FOUND
+import com.sapuseven.sneakybot.plugin.accounts.ApiConstants.ERROR_RATE_LIMIT
+import com.sapuseven.sneakybot.plugin.accounts.models.ApiClient
 import com.sapuseven.sneakybot.plugin.accounts.models.ApiError
 import com.sapuseven.sneakybot.plugins.PluggableService
 import com.sapuseven.sneakybot.plugins.PluginManager
 import com.sapuseven.sneakybot.utils.ConsoleCommand
 import io.javalin.Javalin
+import io.javalin.http.Context
+import io.javalin.http.HttpResponseException
+import io.javalin.http.util.RateLimiter
 import io.javalin.plugin.json.JsonMapper
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
+import java.util.concurrent.TimeUnit
 
 @Suppress("unused")
 class ServiceApi : PluggableService {
 	private lateinit var app: Javalin
+	private val rateLimiter = RateLimiter(TimeUnit.MINUTES)
 
 	override fun preInit(pluginManager: PluginManager) {
 		val port = pluginManager.getConfiguration("PluginAccounts-Server").getInt("port", 9900)
@@ -26,9 +35,44 @@ class ServiceApi : PluggableService {
 	}
 
 	override fun postInit(pluginManager: PluginManager) {
-		app.get("/clients/{name}") { ctx ->
-			ctx.json(ApiError(ERROR_NOT_FOUND))
-			//ctx.result("Hello: " + ctx.pathParam("name"))
+		app.get("/clients/<name>") { ctx ->
+			if (rateLimit(ctx)) return@get
+
+			var client: Client? = null
+
+			try {
+				client = pluginManager.api?.getClientByUId(ctx.pathParam("name"))
+			} catch (_: TS3CommandFailedException) {
+			}
+
+			if (client == null) {
+				try {
+					client = pluginManager.api?.getClientByNameExact(ctx.pathParam("name"), true)
+				} catch (_: TS3CommandFailedException) {
+				}
+			}
+
+			if (client == null) {
+				ctx.json(ApiError(ERROR_NOT_FOUND))
+			} else {
+				ctx.json(
+					ApiClient(
+						uuid = client.uniqueIdentifier,
+						displayName = client.nickname,
+						linkedAccounts = emptyList()
+					)
+				)
+			}
+		}
+	}
+
+	private fun rateLimit(ctx: Context): Boolean {
+		return try {
+			rateLimiter.incrementCounter(ctx, 5)
+			false
+		} catch (e: HttpResponseException) {
+			ctx.json(ApiError(ERROR_RATE_LIMIT))
+			true
 		}
 	}
 
