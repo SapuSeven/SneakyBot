@@ -14,6 +14,8 @@ repositories {
 
 dependencies {
     implementation("io.javalin:javalin:4.6.1")
+    implementation("com.github.kittinunf.fuel:fuel:2.3.1")
+    implementation("com.github.kittinunf.fuel:fuel-kotlinx-serialization:2.3.1")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2")
     compileOnly(kotlin("stdlib-jdk8"))
     compileOnly(project(":sneakybot-sdk"))

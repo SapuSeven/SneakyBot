@@ -1,12 +1,17 @@
 package com.sapuseven.sneakybot.plugin.accounts
 
+import com.github.kittinunf.fuel.Fuel
+import com.github.kittinunf.fuel.core.FuelError
 import com.github.theholywaffle.teamspeak3.api.event.BaseEvent
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException
 import com.github.theholywaffle.teamspeak3.api.wrapper.Client
+import com.sapuseven.sneakybot.plugin.accounts.ApiConstants.ERROR_API_UNREACHABLE
 import com.sapuseven.sneakybot.plugin.accounts.ApiConstants.ERROR_NOT_FOUND
 import com.sapuseven.sneakybot.plugin.accounts.ApiConstants.ERROR_RATE_LIMIT
 import com.sapuseven.sneakybot.plugin.accounts.ApiConstants.ERROR_UNKNOWN
-import com.sapuseven.sneakybot.plugin.accounts.models.ApiClient
+import com.sapuseven.sneakybot.plugin.accounts.ApiConstants.PLATFORM_STEAM
+import com.sapuseven.sneakybot.plugin.accounts.ApiConstants.PLATFORM_TS
+import com.sapuseven.sneakybot.plugin.accounts.models.ApiAccount
 import com.sapuseven.sneakybot.plugin.accounts.models.ApiError
 import com.sapuseven.sneakybot.plugins.PluggableService
 import com.sapuseven.sneakybot.plugins.PluginManager
@@ -25,50 +30,112 @@ import java.util.concurrent.TimeUnit
 @Suppress("unused")
 class ServiceApi : PluggableService {
 	private lateinit var app: Javalin
+	private lateinit var steamApiRoot: String
+	private val steamApiSearch = "/steam/search/"
+	private val steamApiInvite = "/steam/message/"
 	private val rateLimiter = RateLimiter(TimeUnit.MINUTES)
 	private val accounts = AccountStorage()
 
 	override fun preInit(pluginManager: PluginManager) {
-		val port = pluginManager.getConfiguration("PluginAccounts-Server").getInt("port", 9900)
-		app = Javalin.create { config ->
-			config.showJavalinBanner = false
-			config.jsonMapper(kotlinxSerializationMapper)
-		}.start(port)
+		pluginManager.getConfiguration("PluginAccounts-SteamApi").let { config ->
+			steamApiRoot = "http://" + config.get("host", "localhost") + ":" + config.getInt("port", 7300)
+		}
+		pluginManager.getConfiguration("PluginAccounts-Server").let { config ->
+			val port = config.getInt("port", 9900)
+			app = Javalin.create { cfg ->
+				cfg.showJavalinBanner = false
+				cfg.jsonMapper(kotlinxSerializationMapper)
+			}.start(port)
+		}
 	}
 
 	override fun postInit(pluginManager: PluginManager) {
-		app.get("/clients/search/<name>") { ctx ->
+		app.get("/search/<name>") { ctx ->
 			if (rateLimit(ctx)) return@get
 
-			var client: Client? = null
+			when (ctx.queryParam("platform")) {
+				"steam" -> {
+					try {
+						val (_, _, result) = Fuel.get(steamApiRoot + steamApiSearch + ctx.pathParam("name"))
+							.responseString()
 
-			try {
-				client = pluginManager.api?.getClientByUId(ctx.pathParam("name"))
-			} catch (_: TS3CommandFailedException) {
-			}
-
-			if (client == null) {
-				try {
-					client = pluginManager.api?.getClientByNameExact(ctx.pathParam("name"), true)
-				} catch (_: TS3CommandFailedException) {
+						if (result.get().isBlank()) {
+							ctx.json(ApiError(ERROR_NOT_FOUND))
+						} else {
+							ctx.json(
+								ApiAccount(
+									id = result.get(),
+									platform = PLATFORM_STEAM
+								)
+							)
+						}
+					} catch (e: FuelError) {
+						ctx.json(ApiError(ERROR_API_UNREACHABLE))
+					}
 				}
-			}
+				else -> {
+					var client: Client? = null
 
-			if (client == null) {
-				ctx.json(ApiError(ERROR_NOT_FOUND))
-			} else {
-				ctx.json(
-					ApiClient(
-						uuid = client.uniqueIdentifier,
-						displayName = client.nickname,
-						linkedAccounts = emptyList()
-					)
-				)
+					try {
+						client = pluginManager.api?.getClientByUId(ctx.pathParam("name"))
+					} catch (_: TS3CommandFailedException) {
+					}
+
+					if (client == null) {
+						try {
+							client = pluginManager.api?.getClientByNameExact(ctx.pathParam("name"), true)
+						} catch (_: TS3CommandFailedException) {
+						}
+					}
+
+					if (client == null) {
+						ctx.json(ApiError(ERROR_NOT_FOUND))
+					} else {
+						ctx.json(
+							ApiAccount(
+								id = client.uniqueIdentifier,
+								platform = PLATFORM_TS
+							)
+						)
+					}
+				}
 			}
 		}
 
-		app.get("/clients/invite/<uuid>") { ctx ->
+		app.get("/invite/<id>") { ctx ->
 			if (rateLimit(ctx)) return@get
+
+			when (ctx.queryParam("platform")) {
+				"steam" -> {
+					val code = accounts[ctx.pathParam("id")]?.generateCode()
+
+					val (_, _, _) = Fuel.post(steamApiRoot + steamApiInvite + ctx.pathParam("id"))
+						.body("Hi there! Please use the following code to verify your Steam account: $code")
+						.response()
+				}
+				else -> try {
+					pluginManager.api?.let { api ->
+						val client = api.getClientByUId(ctx.pathParam("id"))
+						val code = accounts[client.uniqueIdentifier]?.generateCode()
+
+						if (code == null) {
+							ctx.json(ApiError(ERROR_UNKNOWN))
+							return@get
+						}
+
+						api.sendPrivateMessage(
+							client.id,
+							"Hi there! Please use the following code to verify your TeamSpeak account: $code"
+						)
+					}
+				} catch (e: TS3CommandFailedException) {
+					ctx.json(ApiError(ERROR_NOT_FOUND))
+				}
+			}
+		}
+
+		app.post("/link/<uuid>") { ctx ->
+			if (rateLimit(ctx)) return@post
 
 			try {
 				pluginManager.api?.let { api ->
@@ -77,7 +144,7 @@ class ServiceApi : PluggableService {
 
 					if (code == null) {
 						ctx.json(ApiError(ERROR_UNKNOWN))
-						return@get
+						return@post
 					}
 
 					api.sendPrivateMessage(
