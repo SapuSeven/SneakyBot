@@ -14,6 +14,7 @@ repositories {
 
 dependencies {
     implementation("io.javalin:javalin:4.6.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2")
     compileOnly(kotlin("stdlib-jdk8"))
     compileOnly(project(":sneakybot-sdk"))
     compileOnly("org.slf4j:slf4j-simple:1.7.2")
