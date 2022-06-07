@@ -5,6 +5,7 @@ import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedExcepti
 import com.github.theholywaffle.teamspeak3.api.wrapper.Client
 import com.sapuseven.sneakybot.plugin.accounts.ApiConstants.ERROR_NOT_FOUND
 import com.sapuseven.sneakybot.plugin.accounts.ApiConstants.ERROR_RATE_LIMIT
+import com.sapuseven.sneakybot.plugin.accounts.ApiConstants.ERROR_UNKNOWN
 import com.sapuseven.sneakybot.plugin.accounts.models.ApiClient
 import com.sapuseven.sneakybot.plugin.accounts.models.ApiError
 import com.sapuseven.sneakybot.plugins.PluggableService
@@ -25,6 +26,7 @@ import java.util.concurrent.TimeUnit
 class ServiceApi : PluggableService {
 	private lateinit var app: Javalin
 	private val rateLimiter = RateLimiter(TimeUnit.MINUTES)
+	private val accounts = AccountStorage()
 
 	override fun preInit(pluginManager: PluginManager) {
 		val port = pluginManager.getConfiguration("PluginAccounts-Server").getInt("port", 9900)
@@ -35,7 +37,7 @@ class ServiceApi : PluggableService {
 	}
 
 	override fun postInit(pluginManager: PluginManager) {
-		app.get("/clients/<name>") { ctx ->
+		app.get("/clients/search/<name>") { ctx ->
 			if (rateLimit(ctx)) return@get
 
 			var client: Client? = null
@@ -62,6 +64,29 @@ class ServiceApi : PluggableService {
 						linkedAccounts = emptyList()
 					)
 				)
+			}
+		}
+
+		app.get("/clients/invite/<uuid>") { ctx ->
+			if (rateLimit(ctx)) return@get
+
+			try {
+				pluginManager.api?.let { api ->
+					val client = api.getClientByUId(ctx.pathParam("uuid"))
+					val code = accounts[client.uniqueIdentifier]?.generateCode()
+
+					if (code == null) {
+						ctx.json(ApiError(ERROR_UNKNOWN))
+						return@get
+					}
+
+					api.sendPrivateMessage(
+						client.id,
+						"Hi there! Please use the following code to verify your TeamSpeak account: $code"
+					)
+				}
+			} catch (e: TS3CommandFailedException) {
+				ctx.json(ApiError(ERROR_NOT_FOUND))
 			}
 		}
 	}
