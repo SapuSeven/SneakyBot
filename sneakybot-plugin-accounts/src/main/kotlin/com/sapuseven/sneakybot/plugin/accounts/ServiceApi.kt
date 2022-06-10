@@ -5,7 +5,6 @@ import com.github.kittinunf.fuel.core.FuelError
 import com.github.theholywaffle.teamspeak3.api.event.BaseEvent
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException
 import com.github.theholywaffle.teamspeak3.api.wrapper.Client
-import com.sapuseven.sneakybot.plugin.accounts.ApiConstants.ERROR_API_UNREACHABLE
 import com.sapuseven.sneakybot.plugin.accounts.ApiConstants.ERROR_LINK_CODE_INVALID
 import com.sapuseven.sneakybot.plugin.accounts.ApiConstants.ERROR_LINK_TS_MISSING
 import com.sapuseven.sneakybot.plugin.accounts.ApiConstants.ERROR_NOT_FOUND
@@ -73,7 +72,8 @@ class ServiceApi : PluggableService {
 							)
 						}
 					} catch (e: FuelError) {
-						ctx.send(503, ApiError(ERROR_API_UNREACHABLE))
+						ctx.send(404, ApiError(ERROR_NOT_FOUND))
+						//ctx.send(503, ApiError(ERROR_API_UNREACHABLE))
 					}
 				}
 				else -> {
