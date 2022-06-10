@@ -15,6 +15,7 @@ import com.sapuseven.sneakybot.plugin.accounts.ApiConstants.PLATFORM_STEAM
 import com.sapuseven.sneakybot.plugin.accounts.ApiConstants.PLATFORM_TS
 import com.sapuseven.sneakybot.plugin.accounts.models.ApiAccount
 import com.sapuseven.sneakybot.plugin.accounts.models.ApiError
+import com.sapuseven.sneakybot.plugin.accounts.models.ApiSuccess
 import com.sapuseven.sneakybot.plugins.PluggableService
 import com.sapuseven.sneakybot.plugins.PluginManager
 import com.sapuseven.sneakybot.utils.ConsoleCommand
@@ -62,17 +63,17 @@ class ServiceApi : PluggableService {
 							.responseString()
 
 						if (result.get().isBlank()) {
-							ctx.json(ApiError(ERROR_NOT_FOUND))
+							ctx.send(404, ApiError(ERROR_NOT_FOUND))
 						} else {
-							ctx.json(
-								ApiAccount(
+							ctx.send(
+								200, ApiAccount(
 									id = result.get(),
 									platform = PLATFORM_STEAM
 								)
 							)
 						}
 					} catch (e: FuelError) {
-						ctx.json(ApiError(ERROR_API_UNREACHABLE))
+						ctx.send(503, ApiError(ERROR_API_UNREACHABLE))
 					}
 				}
 				else -> {
@@ -91,10 +92,10 @@ class ServiceApi : PluggableService {
 					}
 
 					if (client == null) {
-						ctx.json(ApiError(ERROR_NOT_FOUND))
+						ctx.send(404, ApiError(ERROR_NOT_FOUND))
 					} else {
-						ctx.json(
-							ApiAccount(
+						ctx.send(
+							200, ApiAccount(
 								id = client.uniqueIdentifier,
 								platform = PLATFORM_TS
 							)
@@ -129,7 +130,7 @@ class ServiceApi : PluggableService {
 						code = accounts[client.uniqueIdentifier]?.generateCode()
 
 						if (code == null) {
-							ctx.json(ApiError(ERROR_UNKNOWN))
+							ctx.send(500, ApiError(ERROR_UNKNOWN))
 							return@get
 						}
 
@@ -139,7 +140,7 @@ class ServiceApi : PluggableService {
 						)
 					}
 				} catch (e: TS3CommandFailedException) {
-					ctx.json(ApiError(ERROR_NOT_FOUND))
+					ctx.send(404, ApiError(ERROR_NOT_FOUND))
 				}
 			}
 
@@ -157,7 +158,7 @@ class ServiceApi : PluggableService {
 
 			// Check if TS account is present
 			if (mainAccount == null) {
-				ctx.json(ApiError(ERROR_LINK_TS_MISSING))
+				ctx.send(400, ApiError(ERROR_LINK_TS_MISSING))
 				return@post
 			}
 
@@ -166,7 +167,7 @@ class ServiceApi : PluggableService {
 				allAccounts.forEach { a ->
 					val expectedCode = storedCodes.get(generateAccountId(a.platform, a.id), "")
 					if (expectedCode.isEmpty() || a.code != expectedCode) {
-						ctx.json(ApiError(ERROR_LINK_CODE_INVALID))
+						ctx.send(400, ApiError(ERROR_LINK_CODE_INVALID))
 						return@post
 					}
 				}
@@ -179,7 +180,7 @@ class ServiceApi : PluggableService {
 					addAll(otherAccounts.map { a -> generateAccountId(a.platform, a.id).replace(",", "") })
 					if (size > 0)
 						accountLinks.put(key, joinToString(","))
-					ctx.status(200)
+					ctx.send(200, ApiSuccess())
 				}
 			}
 		}
@@ -190,13 +191,18 @@ class ServiceApi : PluggableService {
 			rateLimiter.incrementCounter(ctx, 5)
 			false
 		} catch (e: HttpResponseException) {
-			ctx.json(ApiError(ERROR_RATE_LIMIT))
+			ctx.send(429, ApiError(ERROR_RATE_LIMIT))
 			true
 		}
 	}
 
 	private fun generateAccountId(platform: String, id: String): String {
 		return platform + '-' + id.replace("=", "")
+	}
+
+	private fun Context.send(code: Int, obj: Any) {
+		status(code)
+		json(obj)
 	}
 
 	override fun stop(pluginManager: PluginManager) {
@@ -215,6 +221,7 @@ class ServiceApi : PluggableService {
 		// unused
 	}
 
+	@Suppress("OPT_IN_IS_NOT_ENABLED", "WRONG_NULLABILITY_FOR_JAVA_OVERRIDE")
 	@OptIn(ExperimentalSerializationApi::class)
 	val kotlinxSerializationMapper = object : JsonMapper {
 		override fun <T> fromJsonString(json: String, targetClass: Class<T>): T {
