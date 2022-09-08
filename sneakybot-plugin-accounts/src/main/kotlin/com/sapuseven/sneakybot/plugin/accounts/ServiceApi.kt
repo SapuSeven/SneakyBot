@@ -47,8 +47,8 @@ class ServiceApi : PluggableService {
 			app = Javalin.create { cfg ->
 				cfg.showJavalinBanner = false
 				cfg.jsonMapper(kotlinxSerializationMapper)
+				cfg.enableCorsForOrigin("https://sapuseven.com")
 			}.start(port)
-			app.enableCorsForOrigin("https://sapuseven.com")
 		}
 	}
 
