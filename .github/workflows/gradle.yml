@@ -19,7 +19,7 @@ jobs:
       run: chmod +x gradlew
       
     - name: Build with Gradle
-      run: ./gradlew installDist
+      run: ./gradlew build installDist
       
     - name: Upload SneakyBot artifacts
       uses: actions/upload-artifact@v1
