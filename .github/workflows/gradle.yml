@@ -18,13 +18,13 @@ jobs:
       run: chmod +x gradlew
     - name: Build with Gradle
       run: ./gradlew build
-    - name: Upload SneakyBOT artifacts
+    - name: Upload SneakyBot artifacts
       uses: actions/upload-artifact@v1
       with:
-        name: SneakyBOT
+        name: SneakyBot
         path: sneakybot/build/distributions/
-    - name: Upload SneakyBOT plugin artifacts
+    - name: Upload SneakyBot plugin artifacts
       uses: actions/upload-artifact@v1
       with:
-        name: SneakyBOT Plugins
+        name: SneakyBot Plugins
         path: plugins/
