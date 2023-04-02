@@ -75,15 +75,17 @@ object PluginLoader {
 		while (ent != null) {
 			if (!ent.name.startsWith("META-INF")
 				&& ent.name.lowercase(Locale.getDefault()).endsWith(".class")
+				&& !ent.name.contains('$')
 			)
 				try {
 					val cls = cl.loadClass(ent.name.substring(0, ent.name.length - 6).replace('/', '.'))
 					if (isPluggableClass(cls, pluginClass))
 						classes.add(cls)
-				} catch (e: Exception) {
-					log.error("Can't load Class ${ent.name}: $e")
-				} catch (e: Error) {
-					log.error("Can't load Class ${ent.name}: $e")
+				} catch (e: Throwable) {
+					when (e) {
+						is NoClassDefFoundError -> log.debug("Missing class for {}: {}", ent.name, e.message)
+						else -> log.error("Can't load Class {}", ent.name, e)
+					}
 				}
 			ent = jarInputStream.nextJarEntry
 		}

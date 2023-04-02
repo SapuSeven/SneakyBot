@@ -314,7 +314,8 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
 
 	private fun discoverServerGroup(): Int {
 		log.info("Searching for server group...")
-		var serverGroupId = query.api.serverGroups.find { it.name == botConfig.nickname }?.id ?: -1
+		val name = botConfig.nickname
+		var serverGroupId = query.api.serverGroups.find { it.name == name }?.id ?: -1
 
 		if (serverGroupId == -1) {
 			log.debug("Not found :(")
