@@ -138,7 +138,7 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
 
 				whoAmI = query.api.whoAmI()
 				log.debug("Current nickname: ${whoAmI.nickname}")
-				val newName = if (botConfig.debug) botConfig.username + "-Dev" else botConfig.username
+				val newName = if (botConfig.debug) botConfig.nickname + "-Dev" else botConfig.nickname
 				if (whoAmI.nickname != newName) {
 					log.debug("Changing nickname to $newName")
 					query.api.setNickname(newName)
@@ -314,7 +314,7 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
 
 	private fun discoverServerGroup(): Int {
 		log.info("Searching for server group...")
-		var serverGroupId = query.api.serverGroups.find { it.name == botConfig.username }?.id ?: -1
+		var serverGroupId = query.api.serverGroups.find { it.name == botConfig.nickname }?.id ?: -1
 
 		if (serverGroupId == -1) {
 			log.debug("Not found :(")

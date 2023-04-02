@@ -8,13 +8,13 @@ class SneakyBotConfig(parser: ArgParser) {
     val host: String by parser.storing(
         "-s",
         "--host",
-        help = "hostname or IP address of the TeamSpeak3 Server"
+        help = "hostname or IP address of the TeamSpeak Server"
     )
 
     val port: Int by parser.storing(
         "-q",
         "--port",
-        help = "the ServerQuery port of the TeamSpeak3 Server"
+        help = "the ServerQuery port of the TeamSpeak Server"
     ) { toInt() }
         .default(10011)
         .addValidator {
@@ -22,19 +22,25 @@ class SneakyBotConfig(parser: ArgParser) {
                 throw InvalidArgumentException("Invalid port (valid range: 1-65535)")
         }
 
-    // TODO: Add option to use different login- and nicknames
     val username: String by parser.storing(
         "-u",
         "--user",
-        help = "the ServerQuery username to use for connecting to the TeamSpeak3 Server"
+        help = "the ServerQuery username to use for connecting to the TeamSpeak Server"
     )
         .default("SneakyBot")
 
     val password: String by parser.storing(
         "-p",
         "--password",
-        help = "the ServerQuery password to use for connecting to the TeamSpeak3 Server"
+        help = "the ServerQuery password to use for connecting to the TeamSpeak Server"
     )
+
+    val nickname: String by parser.storing(
+        "-n",
+        "--nickname",
+        help = "the nickname (display name) to use after logging in"
+    )
+        .default("SneakyBot")
 
     val config: String by parser.storing(
         "-c",
@@ -46,7 +52,7 @@ class SneakyBotConfig(parser: ArgParser) {
     val unlimitedFloodRate: Boolean by parser.flagging(
         "-f",
         "--unlimited",
-        help = "enable unlimited flood rate (ATTENTION: only use if your IP is whitelisted in the TeamSpeak3 server configuration)"
+        help = "enable unlimited flood rate (ATTENTION: only use if your IP is whitelisted in the TeamSpeak server configuration)"
     )
 
     val debug: Boolean by parser.flagging(
