@@ -37,7 +37,7 @@ interface PluggableCommand {
     /**
      * Use ths method to obtain a [PluginManager] object which allows you to interact with the bot.
      *
-     * @param pluginManager The [PluginManager] of the main SneakyBOT instance.
+     * @param pluginManager The [PluginManager] of the main SneakyBot instance.
      */
     fun setPluginManager(pluginManager: PluginManager)
 }

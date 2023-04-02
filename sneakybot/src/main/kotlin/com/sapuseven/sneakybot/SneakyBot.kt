@@ -111,9 +111,9 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
 			"I will now notify all users (in the console channel / direct contacts) that I have fully loaded all my components."
 		)
 		if (mode == MODE_CHANNEL)
-			sendChannelMessage("SneakyBOT is now online.")
+			sendChannelMessage("SneakyBot is now online.")
 		else if (mode == MODE_DIRECT)
-			sendDirectMessage("SneakyBOT is now online. Please use the direct chat for commands.")
+			sendDirectMessage("SneakyBot is now online. Please use the direct chat for commands.")
 
 		query.api.addTS3Listeners(EventListenerImplementation(this))
 	}
@@ -322,10 +322,10 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
 			serverGroupId =
 				query.api.copyServerGroup(
 					botConfig.templateServerGroupId,
-					"SneakyBOT",
+					"SneakyBot",
 					PermissionGroupDatabaseType.REGULAR
 				)
-			log.debug("Finished, SneakyBOT Server Group created.")
+			log.debug("Finished, SneakyBot Server Group created.")
 		} else {
 			log.info("Server group found.")
 		}
@@ -344,9 +344,9 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
 
 		if (::query.isInitialized && query.isConnected) {
 			if (mode == MODE_DIRECT)
-				sendDirectMessage("SneakyBOT is now offline.")
+				sendDirectMessage("SneakyBot is now offline.")
 			else
-				sendChannelMessage("SneakyBOT is now offline.")
+				sendChannelMessage("SneakyBot is now offline.")
 
 			query.exit()
 		}

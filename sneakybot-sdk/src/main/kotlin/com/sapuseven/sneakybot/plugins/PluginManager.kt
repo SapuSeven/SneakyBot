@@ -12,7 +12,7 @@ import java.util.prefs.Preferences
 interface PluginManager {
 
     /**
-     * This method is used to obtain the SneakyBOTs main [TS3Api] object.
+     * This method is used to obtain the SneakyBot's main [TS3Api] object.
      *
      * @return A [TS3Api] object for accessing the TeamSpeak ServerQuery api.
      */

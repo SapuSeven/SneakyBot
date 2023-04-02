@@ -35,7 +35,7 @@ internal class ServiceChannelMode(private val bot: SneakyBot) : BuiltinService()
                     SneakyBot.log.info("User $name entered the Console channel.")
                     if (bot.mode == SneakyBot.MODE_CHANNEL)
                         bot.manager.sendMessage(
-                            "Welcome, " + name + ", to the SneakyBOT Console!\n" +
+                            "Welcome, " + name + ", to the SneakyBot Console!\n" +
                                     "If you are new, '!help' is usually a good command for getting started.", e.clientId
                         )
                 }
@@ -98,10 +98,10 @@ internal class ServiceChannelMode(private val bot: SneakyBot) : BuiltinService()
     }
 
     private fun createConsoleChannel(): Int {
-        SneakyBot.log.debug("Creating a new SneakyBOT Console channel...")
+        SneakyBot.log.debug("Creating a new SneakyBot Console channel...")
         val properties = HashMap<ChannelProperty, String>()
         properties[ChannelProperty.CHANNEL_FLAG_TEMPORARY] = "1"
-        properties[ChannelProperty.CHANNEL_TOPIC] = "Console for SneakyBOT"
+        properties[ChannelProperty.CHANNEL_TOPIC] = "Console for SneakyBot"
         properties[ChannelProperty.CHANNEL_NEEDED_TALK_POWER] = "100"
         properties[ChannelProperty.CHANNEL_PASSWORD] = bot.botConfig.consolePassword
 
@@ -115,9 +115,9 @@ internal class ServiceChannelMode(private val bot: SneakyBot) : BuiltinService()
         SneakyBot.log.debug("Searching for an existing console channel...")
         val consoleChannel = bot.query.api.channels.find { it.name == bot.botConfig.consoleName }
         if (consoleChannel == null)
-            SneakyBot.log.debug("No SneakyBOT Console channel found.")
+            SneakyBot.log.debug("No SneakyBot Console channel found.")
         else
-            SneakyBot.log.debug("Using existing SneakyBOT Console channel with ID #${consoleChannel.id}")
+            SneakyBot.log.debug("Using existing SneakyBot Console channel with ID #${consoleChannel.id}")
 
         return consoleChannel?.id
     }

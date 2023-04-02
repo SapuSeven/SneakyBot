@@ -28,7 +28,7 @@ internal class ServiceDirectMode(private val bot: SneakyBot) : BuiltinService() 
                 if (e.targetMode == TextMessageTargetMode.CLIENT) interpretDirectMessage(e)
             }
             is ClientJoinEvent -> {
-                // If a user joins who is already in the SneakyBOT server group, setup direct mode or add to directs
+                // If a user joins who is already in the SneakyBot server group, setup direct mode or add to directs
                 if (bot.query.api.getServerGroupsByClientId(e.clientDatabaseId).any { it.id == bot.serverGroupId }) {
                     if (bot.mode == SneakyBot.MODE_DIRECT) {
                         // Add client to directs
@@ -82,7 +82,7 @@ internal class ServiceDirectMode(private val bot: SneakyBot) : BuiltinService() 
     }
 
     /**
-     * Looks for clients in the SneakyBOT server group.
+     * Looks for clients in the SneakyBot server group.
      * If so, switch to direct mode.
      */
     private fun lookForExistingDirectClients() {
@@ -100,7 +100,7 @@ internal class ServiceDirectMode(private val bot: SneakyBot) : BuiltinService() 
         SneakyBot.log.info("Switching to direct mode...")
         bot.directClients.clear()
         val clientInfo = bot.query.api.getClientInfo(invokerId)
-        SneakyBot.log.info("Removing all users from the SneakyBOT server group...")
+        SneakyBot.log.info("Removing all users from the SneakyBot server group...")
         bot.query.api.getServerGroupClients(bot.serverGroupId).forEach {
             if (clientInfo.databaseId != it.clientDatabaseId)
                 bot.query.api.removeClientFromServerGroup(bot.serverGroupId, it.clientDatabaseId)

@@ -10,7 +10,7 @@ internal class CommandStop(private val bot: SneakyBot) : BuiltinCommand() {
 
     init {
         command.commandName = "stop"
-        command.help = "Stops the SneakyBOT."
+        command.help = "Stops the SneakyBot."
     }
 
     override fun execute(cmd: ConsoleCommand, invokerId: Int): Boolean {

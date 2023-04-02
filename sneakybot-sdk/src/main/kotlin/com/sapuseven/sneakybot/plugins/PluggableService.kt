@@ -10,21 +10,21 @@ interface PluggableService {
     /**
      * This method is being executed before any other action happens.
      *
-     * @param pluginManager The [PluginManager] of the main SneakyBOT instance.
+     * @param pluginManager The [PluginManager] of the main SneakyBot instance.
      */
     fun preInit(pluginManager: PluginManager)
 
     /**
-     * This method is being executed after SneakyBOT set up and loaded all components.
+     * This method is being executed after SneakyBot set up and loaded all components.
      *
-     * @param pluginManager The [PluginManager] of the main SneakyBOT instance.
+     * @param pluginManager The [PluginManager] of the main SneakyBot instance.
      */
     fun postInit(pluginManager: PluginManager)
 
     /**
      * This method is being executed when a user issues the !kill / !stop command.
      *
-     * @param pluginManager The [PluginManager] of the main SneakyBOT instance.
+     * @param pluginManager The [PluginManager] of the main SneakyBot instance.
      */
     fun stop(pluginManager: PluginManager)
 
@@ -41,7 +41,7 @@ interface PluggableService {
     /**
      * Use ths method to obtain a [PluginManager] object which allows you to interact with the bot.
      *
-     * @param pluginManager The [PluginManager] of the main SneakyBOT instance.
+     * @param pluginManager The [PluginManager] of the main SneakyBot instance.
      */
     fun setPluginManager(pluginManager: PluginManager)
 }
