@@ -383,15 +383,15 @@ class SneakyBot(internal val botConfig: SneakyBotConfig) {
 							timer.actionPerformed(manager)
 							Thread.sleep((interval * 1000).toLong())
 						} catch (e: InterruptedException) {
-							log.debug("Timer stopped")
+							log.debug("Timer stopped ({})", timer.javaClass)
 							running = false
 						} catch (e: Exception) {
-							logException(e, "Timer threw an exception")
+							log.error("Timer threw an exception ({})", timer.javaClass, e)
 							if (restartTimeout > 0)
 								try {
 									Thread.sleep((restartTimeout * 1000).toLong())
 								} catch (e: InterruptedException) {
-									log.debug("Timer stopped")
+									log.debug("Timer stopped ({})", timer.javaClass)
 									running = false
 								}
 							else
