@@ -5,9 +5,9 @@ import com.github.kittinunf.result.Result
 import com.sapuseven.sneakybot.plugin.r6siege.enums.Platform
 import com.sapuseven.sneakybot.plugin.r6siege.enums.Rank
 import com.sapuseven.sneakybot.plugin.r6siege.enums.Region
-import com.sapuseven.sneakybot.plugin.r6siege.models.PlayerInfoModel
-import com.sapuseven.sneakybot.plugin.r6siege.models.PlayerProfileModel
-import com.sapuseven.sneakybot.plugin.r6siege.models.PlayerSearchResponseModel
+import com.sapuseven.sneakybot.plugin.r6siege.models.v1.PlayerProfileModel
+import com.sapuseven.sneakybot.plugin.r6siege.models.v1.PlayerSearchResponseModel
+import com.sapuseven.sneakybot.plugin.r6siege.models.v2.FullProfileResponseModel
 import com.sapuseven.sneakybot.plugin.r6siege.utils.AuthContext.authenticatedGet
 import java.util.*
 
@@ -38,13 +38,12 @@ class Api {
 		if (uids.isEmpty()) return emptyMap()
 
 		val (_, _, result) = authenticatedGet(
-			"https://public-ubiservices.ubi.com/v1/spaces/${platform.spaceId}/sandboxes/${platform.url}/r6karma/players?board_id=pvp_ranked&profile_ids=${
+			"https://public-ubiservices.ubi.com/v2/spaces/${platform.spaceId}/title/r6s/skill/full_profiles?platform_families=pc&profile_ids=${
 				uids.joinToString(
 					","
 				)
-			}&region_id=${region.regionName}&season_id=$season"
-		)
-			.responseObject<PlayerInfoModel>()
+			}"
+		).responseObject<FullProfileResponseModel>()
 
 		when (result) {
 			is Result.Failure -> {
@@ -52,7 +51,13 @@ class Api {
 			}
 			is Result.Success -> {
 				val data = result.get()
-				return data.players.mapValues { player -> Rank.values()[player.value.rank] }
+				return data.platformFamiliesFullProfiles.flatMap { platformFamily ->
+					platformFamily.boardIdsFullProfiles.flatMap { boardId ->
+						boardId.fullProfiles
+					}
+				}.associate { fullProfile ->
+					fullProfile.profile.id to Rank.values()[fullProfile.profile.rank]
+				}
 			}
 		}
 	}

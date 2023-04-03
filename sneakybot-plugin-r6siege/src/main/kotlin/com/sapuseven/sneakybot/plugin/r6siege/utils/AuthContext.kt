@@ -5,7 +5,7 @@ import com.github.kittinunf.fuel.core.Request
 import com.github.kittinunf.fuel.core.extensions.jsonBody
 import com.github.kittinunf.fuel.serialization.responseObject
 import com.github.kittinunf.result.Result
-import com.sapuseven.sneakybot.plugin.r6siege.models.AuthResponseModel
+import com.sapuseven.sneakybot.plugin.r6siege.models.v1.AuthResponseModel
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.text.ParsePosition
@@ -20,7 +20,7 @@ object AuthContext {
 	private var expiration: Instant? = null
 
 	private val EXPIRATION_FORMAT = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSS'Z'")
-	private const val RAINBOW_SIX_APPID = "39baebad-39e5-4552-8c25-2c9b919064e2"
+	private const val RAINBOW_SIX_APPID = "e3d5ea9e-50bd-43b7-88bf-39794f4e3d40"
 
 	internal fun saveAuthToken(authToken: String) {
 		savedAuthToken = authToken

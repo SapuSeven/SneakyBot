@@ -30,7 +30,7 @@ class TimerRankUpdate : Timer {
 					// Load the rank for each online user
 					val ubisoftUidToRank = loadPlayerRanks(
 						onlineTsUidToUbisoftUidMapping.map { it.second }.distinct(),
-						Platform.UPLAY,
+						Platform.XPLAY,
 						Region.EU
 					)
 

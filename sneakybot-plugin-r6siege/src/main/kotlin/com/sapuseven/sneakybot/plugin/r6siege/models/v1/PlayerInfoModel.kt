@@ -1,4 +1,4 @@
-package com.sapuseven.sneakybot.plugin.r6siege.models
+package com.sapuseven.sneakybot.plugin.r6siege.models.v1
 
 import kotlinx.serialization.Serializable
 
