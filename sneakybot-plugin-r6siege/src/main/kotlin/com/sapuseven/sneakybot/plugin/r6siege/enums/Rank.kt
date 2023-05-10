@@ -37,9 +37,5 @@ enum class Rank(val displayName: String) {
 	DIAMOND_3("Diamond III"),
 	DIAMOND_2("Diamond II"),
 	DIAMOND_1("Diamond I"),
-	CHAMPION_5("Champion V");
-	CHAMPION_4("Champion IV"),
-	CHAMPION_3("Champion III"),
-	CHAMPION_2("Champion II"),
-	CHAMPION_1("Champion I"),
+	CHAMPIONS("Champions");
 }
